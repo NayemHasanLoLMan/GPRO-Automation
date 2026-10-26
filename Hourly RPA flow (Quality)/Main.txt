@@ -1,0 +1,270 @@
+
+FUNCTION Main_copy GLOBAL
+    Scripting.RunPowershellScript.RunScriptAndFailOnTimeout Script: $'''Get-Process chrome,msedge,firefox,brave,opera,ms-teams,Teams -ErrorAction SilentlyContinue | Stop-Process -Force''' Timeout: 120
+ON ERROR
+
+END
+    DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> CurrentDateTime
+    Text.ConvertDateTimeToText.FromCustomDateTime DateTime: CurrentDateTime CustomFormat: $'''dd-MMM-yyyy''' Result=> FormattedDateTime
+    Text.ConvertDateTimeToText.FromCustomDateTime DateTime: CurrentDateTime CustomFormat: $'''dd-MMM-yyyy (hh tt)''' Result=> FormattedDateTimeForNaming
+    SET Download_Path TO $'''C:\\Users\\RPA01\\EPIC Designers Ltd\\Data x AI Team - Data x AI team - Resources\\Automation Directory\\DataFiles\\Hourly Data (Quality)'''
+    DISABLE SET Download_Path TO $'''C:\\Users\\RPA01\\Downloads\\DataFiles\\TEST FOLDER'''
+    SET ListOfSites TO ['https://gtlgpro.epicbd.com', 'https://egmcl7gpro.epicbd.com', 'https://ciplgpro.epicbd.com', 'https://pgclgpro.epicbd.com', 'https://edliot.epicjordan.com']
+    Variables.CreateNewList List=> FailedURL
+    Variables.CreateNewList List=> WorkingURL
+    Variables.CreateNewList List=> ActiveFactorys
+    Variables.CreateNewList List=> InactiveFactorys
+    Variables.CreateNewList List=> Missing_Files
+    DISABLE Folder.GetFiles Folder: Download_Path FileFilter: $'''*''' IncludeSubfolders: False FailOnAccessDenied: True SortBy1: Folder.SortBy.NoSort SortDescending1: False SortBy2: Folder.SortBy.NoSort SortDescending2: False SortBy3: Folder.SortBy.NoSort SortDescending3: False Files=> CleanList
+    DISABLE File.Delete Files: CleanList
+    LOOP FOREACH CurrentURL IN ListOfSites
+        SET StatusCode TO 0
+        Web.InvokeWebService.InvokeWebService Url: CurrentURL Method: Web.Method.Get Accept: $'''application/xml''' ContentType: $'''application/xml''' ConnectionTimeout: 30 FollowRedirection: True ClearCookies: False FailOnErrorStatus: False EncodeRequestBody: True UserAgent: $'''Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.21) Gecko/20100312 Firefox/3.6''' Encoding: Web.Encoding.AutoDetect AcceptUntrustedCertificates: False TrimRequestBody: True StatusCode=> StatusCode
+    ON ERROR REPEAT 5 TIMES WAIT 3
+    ON ERROR
+
+    END
+        IF StatusCode = 200 THEN
+            Variables.AddItemToList Item: CurrentURL List: WorkingURL
+        ELSE
+            Variables.AddItemToList Item: CurrentURL List: FailedURL
+        END
+    END
+    LOOP FOREACH CurrentActiveURL IN WorkingURL
+        IF CurrentActiveURL = $'''https://ciplgpro.epicbd.com''' THEN
+            Variables.AddItemToList Item: $'''CIPL''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://gtlgpro.epicbd.com''' THEN
+            Variables.AddItemToList Item: $'''GTL''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://pgclgpro.epicbd.com''' THEN
+            Variables.AddItemToList Item: $'''PGCL''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://egmcl7gpro.epicbd.com''' THEN
+            Variables.AddItemToList Item: $'''EGMCL7''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://edliot.epicjordan.com''' THEN
+            Variables.AddItemToList Item: $'''JDL''' List: ActiveFactorys
+        END
+    END
+    LOOP FOREACH CurrentInactiveURL IN FailedURL
+        IF CurrentInactiveURL = $'''https://ciplgpro.epicbd.com''' THEN
+            Variables.AddItemToList Item: $'''CIPL''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://gtlgpro.epicbd.com''' THEN
+            Variables.AddItemToList Item: $'''GTL''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://pgclgpro.epicbd.com''' THEN
+            Variables.AddItemToList Item: $'''PGCL''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://egmcl7gpro.epicbd.com''' THEN
+            Variables.AddItemToList Item: $'''EGMCL7''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://edliot.epicjordan.com''' THEN
+            Variables.AddItemToList Item: $'''JDL''' List: InactiveFactorys
+        END
+    END
+    LOOP FOREACH CurrentFactory IN ActiveFactorys
+        IF CurrentFactory = $'''CIPL''' THEN
+            SET FactoryURL TO $'''https://ciplgpro.epicbd.com'''
+            SET UserName TO $'''u1sew'''
+            SET Password TO 123
+            SET DataTagWIPByDept TO $'''%FactoryURL%/Enquiries/TagWIPByDept'''
+            SET Data8005 TO $'''%FactoryURL%/qcm/Reports/HourlyDHUByLine'''
+            SET Data8006 TO $'''%FactoryURL%/qcm/Reports/WeeklyDHUByLine'''
+            SET Data70012 TO $'''%FactoryURL%/Reports/70012-EmployeeEfficiency'''
+            SET Data70045 TO $'''%FactoryURL%/Reports/70045-HourlyOutputByCheckpoint'''
+            SET Data70056 TO $'''%FactoryURL%/Reports/70056-EmployeeLostTime'''
+            SET Processing_Stage_for_WIP TO ['FIN', 'SEW']
+            SET FIN_Depertment TO ['[U1] Finishing', '[U2] Finishing', '[U3] Finishing']
+            SET SEW_Depertment TO ['[U1] Sewing', '[U2] Sewing', '[U3] Sewing']
+            SET QCM_8005_Hourly_Checkpoints TO ['FIN TOP SIDE QC', 'END LINE QI']
+            SET Depertment_SDT_70056 TO ['[U1] Sewing', '[U2] Sewing', '[U3] Sewing']
+            SET Factory_Name TO $'''-'''
+            SET Shift TO $'''General'''
+        ELSE IF CurrentFactory = $'''GTL''' THEN
+            SET FactoryURL TO $'''https://gtlgpro.epicbd.com'''
+            SET UserName TO $'''Report'''
+            SET Password TO $'''report'''
+            SET DataTagWIPByDept TO $'''%FactoryURL%/Enquiries/TagWIPByDept'''
+            SET Data8005 TO $'''%FactoryURL%/qcm/Reports/HourlyDHUByLine'''
+            SET Data8006 TO $'''%FactoryURL%/qcm/Reports/WeeklyDHUByLine'''
+            SET Data70012 TO $'''%FactoryURL%/Reports/70012-EmployeeEfficiency'''
+            SET Data70045 TO $'''%FactoryURL%/Reports/70045-HourlyOutputByCheckpoint'''
+            SET Data70056 TO $'''%FactoryURL%/Reports/70056-EmployeeLostTime'''
+            SET Processing_Stage_for_WIP TO ['FIN', 'SEW']
+            SET FIN_Depertment TO ['[U1] Finishing', '[U2] Finishing', '[U3] Finishing', '[U4] Finishing']
+            SET SEW_Depertment TO ['[U1] Sewing', '[U2] Sewing', '[U3] Sewing', '[U4] Sewing']
+            SET QCM_8005_Hourly_Checkpoints TO ['FIN TOP SIDE QC', 'END LINE QI']
+            SET Depertment_SDT_70056 TO ['[U1] Sewing', '[U2] Sewing', '[U3] Sewing', '[U4] Sewing']
+            SET Factory_Name TO $'''-'''
+            SET Shift TO $'''General'''
+        ELSE IF CurrentFactory = $'''PGCL''' THEN
+            SET FactoryURL TO $'''https://pgclgpro.epicbd.com'''
+            SET UserName TO $'''pgclsdt'''
+            SET Password TO $'''pgclgpro'''
+            SET DataTagWIPByDept TO $'''%FactoryURL%/Enquiries/TagWIPByDept'''
+            SET Data8005 TO $'''%FactoryURL%/qcm/Reports/HourlyDHUByLine'''
+            SET Data8006 TO $'''%FactoryURL%/qcm/Reports/WeeklyDHUByLine'''
+            SET Data70012 TO $'''%FactoryURL%/Reports/70012-EmployeeEfficiency'''
+            SET Data70045 TO $'''%FactoryURL%/Reports/70045-HourlyOutputByCheckpoint'''
+            SET Data70056 TO $'''%FactoryURL%/Reports/70056-EmployeeLostTime'''
+            SET Processing_Stage_for_WIP TO ['FIN', 'SEW']
+            SET FIN_Depertment TO ['Finishing']
+            SET SEW_Depertment TO ['Sewing']
+            SET QCM_8005_Hourly_Checkpoints TO ['FIN TOP SIDE QC', 'END LINE QI']
+            SET Depertment_SDT_70056 TO ['Sewing']
+            SET Factory_Name TO $'''-'''
+            SET Shift TO $'''General'''
+        ELSE IF CurrentFactory = $'''EGMCL7''' THEN
+            SET FactoryURL TO $'''https://egmcl7gpro.epicbd.com'''
+            SET UserName TO $'''eg7'''
+            SET Password TO 1234
+            SET DataTagWIPByDept TO $'''%FactoryURL%/Enquiries/TagWIPByDept'''
+            SET Data8005 TO $'''%FactoryURL%/qcm/Reports/HourlyDHUByLine'''
+            SET Data8006 TO $'''%FactoryURL%/qcm/Reports/WeeklyDHUByLine'''
+            SET Data70012 TO $'''%FactoryURL%/Reports/70012-EmployeeEfficiency'''
+            SET Data70045 TO $'''%FactoryURL%/Reports/70045-HourlyOutputByCheckpoint'''
+            SET Data70056 TO $'''%FactoryURL%/Reports/70056-EmployeeLostTime'''
+            SET Processing_Stage_for_WIP TO ['FIN', 'SEW']
+            SET FIN_Depertment TO ['Finishing']
+            SET SEW_Depertment TO ['Sewing']
+            SET QCM_8005_Hourly_Checkpoints TO ['FIN TOP SIDE QC', 'END LINE QI']
+            SET Depertment_SDT_70056 TO ['Sewing']
+            SET Factory_Name TO $'''FTYU7_EGMCL'''
+            SET Shift TO $'''General'''
+        ELSE IF CurrentFactory = $'''JDL''' THEN
+            SET FactoryURL TO $'''https://edliot.epicjordan.com'''
+            SET UserName TO $'''jdmgt@edlj'''
+            SET Password TO $'''Epic@123'''
+            SET DataTagWIPByDept TO $'''%FactoryURL%/Enquiries/TagWIPByDept'''
+            SET Data8005 TO $'''%FactoryURL%/qcm/Reports/HourlyDHUByLine'''
+            SET Data8006 TO $'''%FactoryURL%/qcm/Reports/WeeklyDHUByLine'''
+            SET Data70012 TO $'''%FactoryURL%/Reports/70012-EmployeeEfficiency'''
+            SET Data70045 TO $'''%FactoryURL%/Reports/70045-HourlyOutputByCheckpoint'''
+            SET Data70056 TO $'''%FactoryURL%/Reports/70056-EmployeeLostTime'''
+            SET Processing_Stage_for_WIP TO ['FIN', 'SEW']
+            SET FIN_Depertment TO ['[U1] Finishing']
+            SET SEW_Depertment TO ['[U1] Sewing']
+            SET QCM_8005_Hourly_Checkpoints TO ['SEWING ENDLINE QC']
+            SET Depertment_SDT_70056 TO ['[U1] Sewing']
+            SET Factory_Name TO $'''FTYU1_EDLJD'''
+            SET Shift TO $'''DAY'''
+        END
+        SET FactoryRetryCount TO 0
+        SET MaxFactoryRetries TO 2
+        SET FactorySuccess TO $'''False'''
+        LOOP WHILE FactoryRetryCount < MaxFactoryRetries AND FactorySuccess = $'''False'''
+            Scripting.RunPowershellScript.RunScriptAndFailOnTimeout Script: $'''Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process -Force''' Timeout: 30
+            ON ERROR
+            END
+            WAIT 3
+            WebAutomation.LaunchChrome.LaunchChromePressDialogButton Url: FactoryURL WindowState: WebAutomation.BrowserWindowState.Maximized ClearCache: False ClearCookies: False WaitForPageToLoadTimeout: 60 DialogButton: $'''OK''' Timeout: 60 PiPUserDataFolderMode: WebAutomation.PiPUserDataFolderModeEnum.AutomaticProfile TargetDesktop: $'''{"DisplayName":"Local computer","Route":{"ServerType":"Local","ServerAddress":""},"DesktopType":"local"}''' BrowserInstance=> Browser
+            ON ERROR REPEAT 2 TIMES WAIT 5
+            ON ERROR
+                Variables.AddItemToList Item: $'''❌ %CurrentFactory% - Browser launch failed (Attempt %FactoryRetryCount + 1%)''' List: Missing_Files
+                SET FactoryRetryCount TO FactoryRetryCount + 1
+                GOTO 'Retry Factory Cleanup'
+            END
+            CALL 'Welcome Flow'
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'https://egmcl7gpro.epicbd.com/\'']['Image \'logo\'']) FOR 60
+            ON ERROR WaitForWebPageContentError
+                Variables.AddItemToList Item: $'''❌ %CurrentFactory% - Login/Page load failed (Attempt %FactoryRetryCount + 1%)''' List: Missing_Files
+                SET FactoryRetryCount TO FactoryRetryCount + 1
+                GOTO 'Retry Factory Cleanup'
+            ON ERROR TimeoutError
+                Variables.AddItemToList Item: $'''❌ %CurrentFactory% - Login timeout (Attempt %FactoryRetryCount + 1%)''' List: Missing_Files
+                SET FactoryRetryCount TO FactoryRetryCount + 1
+                GOTO 'Retry Factory Cleanup'
+            END
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'QCM 8005 - Hourly DHU'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data70012 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'SDT 70012 - Employee Efficiency'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data70045 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'SDT 70045 - Hourly Output'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data70056 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'SDT 70056 - Employee Lost Time'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: DataTagWIPByDept WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'Tag WIP By Dept'
+            DISABLE WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data8006 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            DISABLE CALL 'QCM 8006 - Weekly DHU'
+            WAIT 10
+            SET FactorySuccess TO $'''True'''
+            LABEL 'Retry Factory Cleanup'
+            WebAutomation.CloseWebBrowser BrowserInstance: Browser
+            ON ERROR
+            END
+            Scripting.RunPowershellScript.RunScriptAndFailOnTimeout Script: $'''Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process -Force''' Timeout: 30
+            ON ERROR
+            END
+            WAIT 3
+        END
+        IF FactorySuccess = $'''False''' THEN
+            Variables.AddItemToList Item: $'''⚠️ %CurrentFactory% - Factory completely failed after %MaxFactoryRetries% attempts''' List: Missing_Files
+        END
+    END
+    IF IsNotEmpty(Missing_Files) THEN
+        SET FlowStatus TO $'''⚠️ Completed with Exceptions'''
+        SET StatusMessage TO $'''Quality Hourly Data flow completed with exceptions. Please manually download the missing files and inject into the Database.'''
+    ELSE
+        SET FlowStatus TO $'''✅ Completed Successfully'''
+        SET StatusMessage TO $'''Quality Hourly Data flow completed successfully for all active factories. All files downloaded.'''
+    END
+    @@location: 'Chat with Flow bot'
+@@'InputSchema:body': '-925335368'
+@@connectionDisplayName: 'Cr70041_shared_teams_3bc99208'
+External.InvokeCloudConnector Connection: '7a6fc549-9f6c-420d-96f9-8bb8d8d9eb1b' ConnectorId: '/providers/Microsoft.PowerApps/apis/shared_teams' OperationId: 'PostMessageToConversation' timeout: 60 @poster: $'''Flow bot''' @location: $'''Chat with Flow bot''' @'body/recipient': $'''hasan.mahmood@epicbd.com''' @'body/messageBody': $'''<b>📊 Quality Hourly Data for All Factory flow</b><br><br>
+
+Dear Hasan,<br><br>
+
+<b>Status:</b> %FlowStatus%<br>
+%StatusMessage%<br><br>
+
+<b>Active Factories:</b><br>
+%ActiveFactorys%<br><br>
+
+<b>Completed On:</b><br>
+%CurrentDateTime%<br><br>
+
+<b>Closed / Inactive Factory URLs:</b><br>
+%InactiveFactorys%<br><br>
+
+<b>Missing / Failed Files (%Missing_Files.Count%):</b><br>
+%Missing_Files%<br><br>
+
+<b>SharePoint Link:</b><br>
+https://epicdesignersltd.sharepoint.com/:f:/s/DataxAITeam/IgCAc-mlKUnYQJVFefrme_OHAZvCol4frDpWrf5SgQzk9vc?e=fzGltN<br><br>
+
+<b>Best Regards,</b><br>
+RPA Bot'''
+    ON ERROR REPEAT 5 TIMES WAIT 3
+    END
+END FUNCTION
+
+# [ControlRepository][PowerAutomateDesktop]
+
+{
+  "ControlRepositorySymbols": [
+    {
+      "IgnoreImagesOnSerialization": false,
+      "Repository": "{\r\n  \"Screens\": [\r\n    {\r\n      \"Controls\": [\r\n        {\r\n          \"AutomationProtocol\": \"uia3\",\r\n          \"ScreenShot\": null,\r\n          \"ElementTypeName\": \"Image\",\r\n          \"InstanceId\": \"1c839fbd-3417-4f27-b11d-9a3da971ec14\",\r\n          \"Name\": \"Image 'logo'\",\r\n          \"SelectorCount\": 1,\r\n          \"Selectors\": [\r\n            {\r\n              \"CustomSelector\": null,\r\n              \"Elements\": [\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"windows desktop theme-web js-focus-visible home\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": true,\r\n                  \"Name\": \"Body 'Dashboard Style Management Style Explorer Operation  ... (\\\"#toast_mini_success\\\"); $(function($){});'\",\r\n                  \"Tag\": \"body\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"page-container\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": true,\r\n                  \"Name\": \"Div 'menu eg Signed in as eg7 Version SW1.0.0.142 Logout  ... round); } } .headerArea { display: none; }'\",\r\n                  \"Tag\": \"div\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"page-content-wrapper\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": false,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"main-body-layout\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": true,\r\n                  \"Name\": \"Div '#overlay_licenseExpired { position: fixed; top: 0;  ... round); } } .headerArea { display: none; }'\",\r\n                  \"Tag\": \"div\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"content\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": true,\r\n                  \"Name\": \"Div '#overlay_licenseExpired { position: fixed; top: 0;  ... round); } } .headerArea { display: none; }'\",\r\n                  \"Tag\": \"div\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"container-fluid container-fixed-lg\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": true,\r\n                  \"Name\": \"Div '#overlay_licenseExpired { position: fixed; top: 0;  ... round); } } .headerArea { display: none; }'\",\r\n                  \"Tag\": \"div\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"pageWrapper\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": true,\r\n                  \"Name\": \"Div '#overlay_licenseExpired { position: fixed; top: 0;  ... round); } } .headerArea { display: none; }'\",\r\n                  \"Tag\": \"div\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": false,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"main-control-window\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": true,\r\n                  \"Name\": \"Div 'GPRO SHOPFLOOR DATA TRACKING HOME PAGE if ('' != ''  ... round); } } .headerArea { display: none; }'\",\r\n                  \"Tag\": \"div\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"control-section vertical-adaptive\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": false,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"grid-content-wrapper\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": false,\r\n                  \"Name\": \"Div 'GPRO SHOPFLOOR DATA TRACKING HOME PAGE'\",\r\n                  \"Tag\": \"div\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"card\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": false,\r\n                  \"Name\": \"Div 'GPRO SHOPFLOOR DATA TRACKING HOME PAGE'\",\r\n                  \"Tag\": \"div\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"row  \"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": false,\r\n                  \"Name\": \"Div 'GPRO SHOPFLOOR DATA TRACKING HOME PAGE'\",\r\n                  \"Tag\": \"div\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"col-lg-12 LandingPageColor\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": false,\r\n                  \"Name\": \"Div 'GPRO SHOPFLOOR DATA TRACKING HOME PAGE'\",\r\n                  \"Tag\": \"div\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": false,\r\n                  \"Name\": \"Div\",\r\n                  \"Tag\": \"div\"\r\n                },\r\n                {\r\n                  \"Attributes\": [\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Alt\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"logo\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Class\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"home_page_logo\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Id\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": true,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Ordinal\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": 0\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Src\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": \"/img/sdt_c-01.png\"\r\n                    },\r\n                    {\r\n                      \"Ignore\": true,\r\n                      \"IsOrdinal\": false,\r\n                      \"IsDisabledAttribute\": false,\r\n                      \"Name\": \"Title\",\r\n                      \"Operation\": \"EqualTo\",\r\n                      \"Value\": null\r\n                    }\r\n                  ],\r\n                  \"CustomValue\": null,\r\n                  \"Ignore\": false,\r\n                  \"Name\": \"Image 'logo'\",\r\n                  \"Tag\": \"img\"\r\n                }\r\n              ],\r\n              \"Ignore\": false,\r\n              \"ImageSelector\": null,\r\n              \"IsCustom\": false,\r\n              \"IsImageBased\": false,\r\n              \"IsPlaceholderSelector\": false,\r\n              \"IsWindowsInstance\": false,\r\n              \"Name\": \"Default Selector\",\r\n              \"Properties\": []\r\n            }\r\n          ],\r\n          \"Tag\": \"img\",\r\n          \"ScreenshotPath\": \"controlRepo-screenshots\\\\14dfb3bd-4dcd-41bd-b04f-ef9d7f0097ed.png\"\r\n        }\r\n      ],\r\n      \"Handle\": {\r\n        \"value\": 0\r\n      },\r\n      \"ProcessName\": null,\r\n      \"ScreenShot\": null,\r\n      \"ElementTypeName\": \"Web Page\",\r\n      \"InstanceId\": \"314903a4-7993-480d-a1e4-b000362454a3\",\r\n      \"Name\": \"Web Page 'https://egmcl7gpro.epicbd.com/'\",\r\n      \"SelectorCount\": 1,\r\n      \"Selectors\": [\r\n        {\r\n          \"CustomSelector\": null,\r\n          \"Elements\": [\r\n            {\r\n              \"Attributes\": [],\r\n              \"CustomValue\": \"domcontainer\",\r\n              \"Ignore\": false,\r\n              \"Name\": \"Web Page 'https://egmcl7gpro.epicbd.com/'\",\r\n              \"Tag\": \"domcontainer\"\r\n            }\r\n          ],\r\n          \"Ignore\": false,\r\n          \"ImageSelector\": null,\r\n          \"IsCustom\": false,\r\n          \"IsImageBased\": false,\r\n          \"IsPlaceholderSelector\": false,\r\n          \"IsWindowsInstance\": false,\r\n          \"Name\": \"Default Selector\",\r\n          \"Properties\": []\r\n        }\r\n      ],\r\n      \"Tag\": \"domcontainer\",\r\n      \"ScreenshotPath\": \"controlRepo-screenshots\\\\5fd2893b-66a1-4fb6-9a9c-967d301d2564.png\"\r\n    }\r\n  ],\r\n  \"Version\": 1\r\n}",
+      "ImportMetadata": {
+        "DisplayName": "Local computer",
+        "ConnectionString": "",
+        "Type": "Local",
+        "DesktopType": "local"
+      },
+      "Name": "appmask"
+    }
+  ],
+  "ImageRepositorySymbol": {
+    "Repository": "{\r\n  \"Folders\": [],\r\n  \"Images\": [],\r\n  \"Version\": 1\r\n}",
+    "ImportMetadata": {},
+    "Name": "imgrepo"
+  },
+  "ConnectionReferences": [
+    {
+      "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+      "DisplayName": "Cr70041_shared_teams_3bc99208",
+      "InternalId": "7a6fc549-9f6c-420d-96f9-8bb8d8d9eb1b",
+      "IsDisabled": false,
+      "LogicalName": "Cr70041_shared_teams_3bc99208046342b59503efda0fbd3fe8",
+      "IsEmbedded": false,
+      "ConnectionName": "shared-teams-ab3bdec1-cc96-4faf-b1df-63eaec9990b1",
+      "ConnectionDisplayName": "Hasan.Mahmood@Epicbd.com"
+    }
+  ]
+}
