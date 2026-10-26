@@ -1,0 +1,93 @@
+
+FUNCTION 'SDT 30026 - Daily Cutting Production' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Production\'']['Div \'/30026 - Daily Cutting Production\'']) THEN
+        SET SubflowRetryCount TO 0
+        SET MaxSubflowRetries TO 2
+        SET DownloadSuccess TO $'''False'''
+        LOOP WHILE SubflowRetryCount < MaxSubflowRetries AND DownloadSuccess = $'''False'''
+            WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data30026 WaitForPageToLoadTimeout: 60
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Production\'']['Div \'Date *\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            END
+            @@RepairWithAIVision: 'True'
+            WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... Production\'']['Input text \'datepicker\''] Text: FormattedDateTime Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 10 TIMES WAIT 3
+            END
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Production\'']['Div \'CUTTING READYCut Bundling Checkpoint *\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            END
+            @@RepairWithAIVision: 'True'
+            WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... Production\'']['Input text \'combobox\''] Text: $'''CUTTING READY''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 10 TIMES WAIT 3
+            END
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Production\'']['Div \'SEWING INSewing Input Checkpoint *\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            END
+            @@RepairWithAIVision: 'True'
+            WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... Production\'']['Input text \'combobox\' 2'] Text: $'''SEWING IN''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 10 TIMES WAIT 3
+            END
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Production\'']['Div \'FIN TOP SIDE QCQC Reject Checkpoint *\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            END
+            @@RepairWithAIVision: 'True'
+            WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... Production\'']['Input text \'combobox\' 3'] Text: $'''FIN TOP SIDE QC''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 10 TIMES WAIT 3
+            END
+            LABEL 'Retry for SDT 30026'
+            WebAutomation.PressButton.PressButtonPressDialogButton BrowserInstance: Browser Control: appmask['Web Page \'h ... Production\'']['Button \'DOWNLOAD EXCEL\''] WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            ON ERROR PressButtonError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            END
+            WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'30026 - Daily Cutting Production - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+            ON ERROR WaitForWindowContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            END
+            UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'30026 - Daily Cutting Production - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Daily Cutting Production for 30026.xls''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+            UIAutomation.PressButton Button: appmask['Window \'30026 - Daily Cutting Production - Google Chrome\'']['Button \'Save\''] Simulate: False
+            ON ERROR PressButtonError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry SDT 30026'
+            END
+            WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Daily Cutting Production for 30026.xls''') FOR 120 
+            ON ERROR TimeoutError
+                GOTO 'Retry for SDT 30026'
+            END
+            SET DownloadSuccess TO $'''True'''
+            LABEL 'Retry SDT 30026'
+            IF DownloadSuccess = $'''False''' THEN
+                WAIT 3
+            END
+        END
+        IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Daily Cutting Production for 30026.xls''') THEN
+            Variables.AddItemToList Item: $'''❌ %CurrentFactory%-%FormattedDateTimeForNaming%-Daily Cutting Production for 30026 - Failed after %MaxSubflowRetries% attempts''' List: Missing_Files
+        END
+    ELSE
+        Variables.AddItemToList Item: $'''⚠️ %CurrentFactory% - SDT 30026 - Report page not available''' List: Missing_Files
+    END
+END FUNCTION

@@ -1,0 +1,100 @@
+
+FUNCTION 'QCM 8005 - Hourly DHU' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\'']['Div \'/QCM8005 - Hourly DHU by Line\'']) THEN
+        WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60
+        LOOP FOREACH Current_QCM_Hourly_Checkpoint IN QCM_8005_Hourly_Checkpoints
+            SET SubflowRetryCount TO 0
+            SET MaxSubflowRetries TO 2
+            SET DownloadSuccess TO $'''False'''
+            LOOP WHILE SubflowRetryCount < MaxSubflowRetries AND DownloadSuccess = $'''False'''
+                WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\'']['Input text \'dtp_8005\'']) FOR 30
+                ON ERROR WaitForWebPageContentError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60
+                    GOTO 'Retry Checkpoint 8005'
+                ON ERROR TimeoutError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60
+                    GOTO 'Retry Checkpoint 8005'
+                END
+                @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\'']['Input text \'dtp_8005\''] Text: FormattedDateTime Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                ON ERROR REPEAT 10 TIMES WAIT 3
+                END
+                WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\'']['Div \'SEWING ENDLINE QCQC Checkpoint *\'']) FOR 30
+                ON ERROR WaitForWebPageContentError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60
+                    GOTO 'Retry Checkpoint 8005'
+                ON ERROR TimeoutError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60
+                    GOTO 'Retry Checkpoint 8005'
+                END
+                @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\'']['Input text \'FIN TOP SIDE QC\''] Text: Current_QCM_Hourly_Checkpoint Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                ON ERROR REPEAT 10 TIMES WAIT 3
+                END
+                WAIT 2
+                WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\'']['Button \'VIEW\''] WaitForPageToLoadTimeout: 60
+                ON ERROR PressButtonError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60
+                    GOTO 'Retry Checkpoint 8005'
+                END
+                LABEL 'Wait for tool ber 1 QCM 8005'
+                WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\'']['Span \'viewer_toolbar_export\'']) FOR 60
+                ON ERROR WaitForWebPageContentError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60
+                    GOTO 'Retry Checkpoint 8005'
+                ON ERROR TimeoutError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60
+                    GOTO 'Retry Checkpoint 8005'
+                END
+                WAIT 5
+                WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\'']['Span \'viewer_toolbar_export\''] WaitForPageToLoadTimeout: 60
+                WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\'']['List item \'Excel Export\'']) FOR 2 
+                ON ERROR REPEAT 5 TIMES WAIT 2
+                ON ERROR WaitForWebPageContentError
+                    GOTO 'Wait for tool ber 1 QCM 8005'
+                ON ERROR TimeoutError
+                    GOTO 'Wait for tool ber 1 QCM 8005'
+                END
+                WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\'']['List item \'Excel Export\''] WaitForPageToLoadTimeout: 60
+                WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'QCM8005 - Hourly DHU by Line - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+                ON ERROR WaitForWindowContentError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60
+                    GOTO 'Retry Checkpoint 8005'
+                ON ERROR TimeoutError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60
+                    GOTO 'Retry Checkpoint 8005'
+                END
+                UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'QCM8005 - Hourly DHU by Line - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-DHU By Line Hourly for 8005 (%Current_QCM_Hourly_Checkpoint%).xlsx''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+                UIAutomation.PressButton Button: appmask['Window \'QCM8005 - Hourly DHU by Line - Google Chrome\'']['Button \'Save\''] Simulate: False
+                ON ERROR PressButtonError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8005 WaitForPageToLoadTimeout: 60
+                    GOTO 'Retry Checkpoint 8005'
+                END
+                WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-DHU By Line Hourly for 8005 (%Current_QCM_Hourly_Checkpoint%).xlsx''') FOR 120 
+                ON ERROR TimeoutError
+                    GOTO 'Wait for tool ber 1 QCM 8005'
+                END
+                SET DownloadSuccess TO $'''True'''
+                LABEL 'Retry Checkpoint 8005'
+                IF DownloadSuccess = $'''False''' THEN
+                    WAIT 3
+                END
+            END
+            IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-DHU By Line Hourly for 8005 (%Current_QCM_Hourly_Checkpoint%).xlsx''') THEN
+                Variables.AddItemToList Item: $'''❌ %CurrentFactory%-%FormattedDateTimeForNaming%-DHU By Line Hourly for 8005 (%Current_QCM_Hourly_Checkpoint%) - Failed after %MaxSubflowRetries% attempts''' List: Missing_Files
+            END
+        END
+    ELSE
+        Variables.AddItemToList Item: $'''⚠️ %CurrentFactory% - QCM 8005 - Report page not available''' List: Missing_Files
+    END
+END FUNCTION

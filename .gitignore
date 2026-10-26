@@ -1,0 +1,21 @@
+# Local credentials and machine-specific configuration
+.env
+.env.*
+!.env.example
+*.local.json
+*.local.txt
+# Runtime data and exported reports
+/output/
+/downloads/
+/logs/
+*.xlsx
+*.xls
+*.csv
+*.log
+# Local tooling
+__pycache__/
+*.pyc
+.vscode/
+.DS_Store
+Thumbs.db
+~$*

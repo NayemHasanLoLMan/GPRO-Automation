@@ -1,0 +1,6 @@
+*.md text eol=lf
+*.json text eol=lf
+*.py text eol=lf
+# Keep PAD clipboard exports intact, including embedded control repositories.
+flows/desktop/**/*.txt -text -whitespace
+*.docx binary

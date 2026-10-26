@@ -1,0 +1,10 @@
+
+FUNCTION 'Welcome Flow' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... LOCAL_CONFIGURATION.com\'']['Heading 3 \'Welcome\'']) THEN
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... LOCAL_CONFIGURATION.com\'']['Input text \'Username\''])
+        WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... LOCAL_CONFIGURATION.com\'']['Input text \'Username\''] Text: UserName Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... LOCAL_CONFIGURATION.com\'']['Input password \'Password\''])
+        WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... LOCAL_CONFIGURATION.com\'']['Input password \'Password\''] Text: Password Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+        WebAutomation.Click.Click BrowserInstance: Browser Control: appmask['Web Page \'h ... LOCAL_CONFIGURATION.com\'']['Button \'LOGIN\''] ClickType: WebAutomation.ClickType.LeftClick MouseClick: True WaitForPageToLoadTimeout: 60 MousePositionRelativeToElement: WebAutomation.RectangleEdgePoint.MiddleCenter OffsetX: 0 OffsetY: 0
+    END
+END FUNCTION

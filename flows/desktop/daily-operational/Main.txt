@@ -1,0 +1,304 @@
+
+FUNCTION Main_copy GLOBAL
+    Scripting.RunPowershellScript.RunScriptAndFailOnTimeout Script: $'''Get-Process chrome,msedge,firefox,brave,opera,ms-teams,Teams -ErrorAction SilentlyContinue | Stop-Process -Force''' Timeout: 120
+ON ERROR
+
+END
+    DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> CurrentDateTime
+    SET Download_Path TO $'''C:\GPRO\output'''
+    SET EGMCL7_Factory TO [715, 720, 900, 905, 915, 920, 950, 953, 954]
+    SET GTL__Factory TO [715, 720, 800, 805, 820, 825, 860, 890, 900]
+    SET JDL_Factory TO [755, 800, 950, 945, 965, 980, 991, 995]
+    SET PGCL_Factory TO [865, 871, 930, 950, 960, 965, 990, 995, 997]
+    SET CIPL_Factory TO [777, 790, 930, 950, 960, 965, 990, 994, 995]
+    SET ListOfSites TO ['https://factory-3.example.invalid', 'https://factory-1.example.invalid', 'https://factory-4.example.invalid', 'https://factory-2.example.invalid', 'https://factory-5.example.invalid']
+    Variables.CreateNewList List=> FailedURL
+    Variables.CreateNewList List=> WorkingURL
+    Variables.CreateNewList List=> ActiveFactorys
+    Variables.CreateNewList List=> InactiveFactorys
+    Variables.CreateNewList List=> Missing_Files
+    DISABLE Folder.GetFiles Folder: Download_Path FileFilter: $'''*''' IncludeSubfolders: False FailOnAccessDenied: True SortBy1: Folder.SortBy.NoSort SortDescending1: False SortBy2: Folder.SortBy.NoSort SortDescending2: False SortBy3: Folder.SortBy.NoSort SortDescending3: False Files=> File_To_Remove
+    DISABLE File.Delete Files: File_To_Remove
+    LOOP FOREACH CurrentURL IN ListOfSites
+        SET StatusCode TO 0
+        Web.InvokeWebService.InvokeWebService Url: CurrentURL Method: Web.Method.Get Accept: $'''application/xml''' ContentType: $'''application/xml''' ConnectionTimeout: 30 FollowRedirection: True ClearCookies: False FailOnErrorStatus: False EncodeRequestBody: True UserAgent: $'''Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.21) Gecko/20100312 Firefox/3.6''' Encoding: Web.Encoding.AutoDetect AcceptUntrustedCertificates: False TrimRequestBody: True StatusCode=> StatusCode
+    ON ERROR REPEAT 5 TIMES WAIT 3
+    ON ERROR
+
+    END
+        IF StatusCode = 200 THEN
+            Variables.AddItemToList Item: CurrentURL List: WorkingURL
+        ELSE
+            Variables.AddItemToList Item: CurrentURL List: FailedURL
+        END
+    END
+    LOOP FOREACH CurrentActiveURL IN WorkingURL
+        IF CurrentActiveURL = $'''https://factory-3.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''CIPL''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://factory-1.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''GTL''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://factory-4.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''PGCL''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://factory-2.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''EGMCL7''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://factory-5.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''JDL''' List: ActiveFactorys
+        END
+    END
+    LOOP FOREACH CurrentInactiveURL IN FailedURL
+        IF CurrentInactiveURL = $'''https://factory-3.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''CIPL''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://factory-1.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''GTL''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://factory-4.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''PGCL''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://factory-2.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''EGMCL7''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://factory-5.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''JDL''' List: InactiveFactorys
+        END
+    END
+    LOOP FOREACH CurrentFactory IN ActiveFactorys
+        IF CurrentFactory = $'''CIPL''' THEN
+            SET FactoryURL TO $'''https://factory-3.example.invalid'''
+            SET UserName TO $'''REPLACE_WITH_USERNAME'''
+            SET Password TO $'''REPLACE_WITH_PASSWORD'''
+            SET OperationalDataURL TO $'''https://factory-3.example.invalid'''
+            SET BundleTag TO CIPL_Factory
+        ELSE IF CurrentFactory = $'''GTL''' THEN
+            SET FactoryURL TO $'''https://factory-1.example.invalid'''
+            SET UserName TO $'''REPLACE_WITH_USERNAME'''
+            SET Password TO $'''REPLACE_WITH_PASSWORD'''
+            SET OperationalDataURL TO $'''https://factory-1.example.invalid'''
+            SET BundleTag TO GTL__Factory
+        ELSE IF CurrentFactory = $'''PGCL''' THEN
+            SET FactoryURL TO $'''https://factory-4.example.invalid'''
+            SET UserName TO $'''REPLACE_WITH_USERNAME'''
+            SET Password TO $'''REPLACE_WITH_PASSWORD'''
+            SET OperationalDataURL TO $'''https://factory-4.example.invalid'''
+            SET BundleTag TO PGCL_Factory
+        ELSE IF CurrentFactory = $'''EGMCL7''' THEN
+            SET FactoryURL TO $'''https://factory-2.example.invalid'''
+            SET UserName TO $'''REPLACE_WITH_USERNAME'''
+            SET Password TO $'''REPLACE_WITH_PASSWORD'''
+            SET OperationalDataURL TO $'''https://factory-2.example.invalid'''
+            SET BundleTag TO EGMCL7_Factory
+        ELSE IF CurrentFactory = $'''JDL''' THEN
+            SET FactoryURL TO $'''https://factory-5.example.invalid'''
+            SET UserName TO $'''REPLACE_WITH_USERNAME'''
+            SET Password TO $'''REPLACE_WITH_PASSWORD'''
+            SET OperationalDataURL TO $'''https://factory-5.example.invalid'''
+            SET BundleTag TO JDL_Factory
+        END
+        WebAutomation.LaunchChrome.LaunchChromePressDialogButton Url: FactoryURL WindowState: WebAutomation.BrowserWindowState.Maximized ClearCache: False ClearCookies: False WaitForPageToLoadTimeout: 60 DialogButton: $'''OK''' Timeout: 60 PiPUserDataFolderMode: WebAutomation.PiPUserDataFolderModeEnum.AutomaticProfile TargetDesktop: $'''{\"DisplayName\":\"Local computer\",\"Route\":{\"ServerType\":\"Local\",\"ServerAddress\":\"\"},\"DesktopType\":\"local\"}''' BrowserInstance=> Browser
+        CALL 'Welcome Flow'
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'https://factory-2.example.invalid\'']['Image \'logo\''])
+        WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: OperationalDataURL WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+        IF FactoryURL = $'''https://factory-1.example.invalid''' THEN
+            IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ansactions\'']['Div \'/Bundle Transaction Enquiry\'']) THEN
+                LOOP FOREACH CurrentBundleTag IN BundleTag
+                    Text.ConvertDateTimeToText.FromCustomDateTime DateTime: CurrentDateTime CustomFormat: $'''dd-MMM-yyyy''' Result=> FormattedDateTime
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: OperationalDataURL WaitForPageToLoadTimeout: 60
+                    WebAutomation.ExecuteJavascript BrowserInstance: Browser Javascript: $'''function ExecuteScript() {
+    return new Promise(function (resolve) {
+        var targets = [
+            \'[id*=\"chkMotherChild\"]\'
+        ];
+        var results = [];
+        var i = 0;
+
+        function next() {
+            if (i >= targets.length) { resolve(results.join(\" | \")); return; }
+            var selector = targets[i];
+            var attempts = 0, maxAttempts = 20, delayMs = 200; // ~4s ceiling
+
+            (function poll() {
+                var input = document.querySelector(selector);
+                var wrapper = input && input.closest(\'.e-checkbox-wrapper\');
+                var checkSpan = wrapper && wrapper.querySelector(\'span.e-frame\');
+
+                if (checkSpan) {
+                    if (!checkSpan.classList.contains(\'e-check\')) {
+                        checkSpan.click();
+                        results.push(selector + \": Clicked\");
+                    } else {
+                        results.push(selector + \": Already checked\");
+                    }
+                    i++; next();
+                } else if (attempts++ < maxAttempts) {
+                    setTimeout(poll, delayMs);
+                } else {
+                    results.push(selector + \": Not found after retries\");
+                    i++; next();
+                }
+            })();
+        }
+        next();
+    });
+}'''
+                ON ERROR REPEAT 5 TIMES WAIT 3
+                END
+                    WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ansactions\'']['Input text \'combobox\'']) 
+                ON ERROR WaitForWebPageContentError
+                    GOTO 'End the flow GTL'
+                END
+                    @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... ansactions\'']['Input text \'combobox\''] Text: CurrentBundleTag Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                ON ERROR REPEAT 10 TIMES WAIT 3
+                END
+                    WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ansactions\'']['Input text \'datepicker\'']) 
+                ON ERROR WaitForWebPageContentError
+                    GOTO 'End the flow GTL'
+                END
+                    @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... ansactions\'']['Input text \'datepicker\''] Text: FormattedDateTime Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                ON ERROR REPEAT 10 TIMES WAIT 3
+                END
+                    LABEL 'Retry from Viewing Report'
+                    WebAutomation.Click.Click BrowserInstance: Browser Control: appmask['Web Page \'h ... ansactions\'']['Button \'VIEW TRANSACTIONS\''] ClickType: WebAutomation.ClickType.LeftClick MouseClick: True WaitForPageToLoadTimeout: 60 MousePositionRelativeToElement: WebAutomation.RectangleEdgePoint.MiddleCenter OffsetX: 0 OffsetY: 0
+                    LABEL 'Retry From Downloding Excel'
+                    WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... TrxSummary\'']['Button \'Export grid\'']) 
+                ON ERROR WaitForWebPageContentError
+                    GOTO 'End the flow GTL'
+                END
+                    WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... TrxSummary\'']['Button \'Export grid\''] WaitForPageToLoadTimeout: 60
+                    WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'Bundle Transaction Enquiry - Google Chrome\'']['Window \'Save As\'']) FOR 20 
+                ON ERROR WaitForWindowContentError
+                    GOTO 'End the flow GTL'
+                ON ERROR TimeoutError
+                    GOTO 'Retry From Downloding Excel'
+                END
+                    UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'Bundle Transaction Enquiry - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%FormattedDateTime%-(%CurrentFactory%)-%CurrentBundleTag%.xlsx''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+                    UIAutomation.PressButton Button: appmask['Window \'Bundle Transaction Enquiry - Google Chrome\'']['Button \'Save\''] Simulate: False
+                    WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%FormattedDateTime%-(%CurrentFactory%)-%CurrentBundleTag%.xlsx''') FOR 120 
+                ON ERROR TimeoutError
+                    GOTO 'Retry from Viewing Report'
+                END
+                    LABEL 'End the flow GTL'
+                    IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%FormattedDateTime%-(%CurrentFactory%)-%CurrentBundleTag%.xlsx''') THEN
+                        Variables.AddItemToList Item: $'''%Download_Path%\\%FormattedDateTime%-(%CurrentFactory%)-%CurrentBundleTag%.xlsx''' List: Missing_Files
+                    END
+                END
+            END
+        ELSE
+            IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... TrxSummary\'']['Div \'/Bundle Transaction Summary Enquiry\'']) THEN
+                LOOP FOREACH CurrentBundleTag IN BundleTag
+                    Text.ConvertDateTimeToText.FromCustomDateTime DateTime: CurrentDateTime CustomFormat: $'''dd-MMM-yyyy''' Result=> FormattedDateTime
+                    WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: OperationalDataURL WaitForPageToLoadTimeout: 60
+                    WebAutomation.ExecuteJavascript BrowserInstance: Browser Javascript: $'''function ExecuteScript() {
+    return new Promise(function (resolve) {
+        var targets = [
+            \'[id*=\"chkbDate_BTSE\"]\',
+            \'[id*=\"chkbOpNo_BTSE\"]\',
+            \'[id*=\"chkbDirectLabor_BTSE\"]\'
+        ];
+        var results = [];
+        var i = 0;
+
+        function next() {
+            if (i >= targets.length) { resolve(results.join(\" | \")); return; }
+            var selector = targets[i];
+            var attempts = 0, maxAttempts = 20, delayMs = 200; // ~4s ceiling
+
+            (function poll() {
+                var input = document.querySelector(selector);
+                var wrapper = input && input.closest(\'.e-checkbox-wrapper\');
+                var checkSpan = wrapper && wrapper.querySelector(\'span.e-frame\');
+
+                if (checkSpan) {
+                    if (!checkSpan.classList.contains(\'e-check\')) {
+                        checkSpan.click();
+                        results.push(selector + \": Clicked\");
+                    } else {
+                        results.push(selector + \": Already checked\");
+                    }
+                    i++; next();
+                } else if (attempts++ < maxAttempts) {
+                    setTimeout(poll, delayMs);
+                } else {
+                    results.push(selector + \": Not found after retries\");
+                    i++; next();
+                }
+            })();
+        }
+        next();
+    });
+}'''
+                    ON ERROR REPEAT 5 TIMES WAIT 3
+                    END
+                    WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... TrxSummary\'']['Input text \'numerictextbox\'']) 
+                    ON ERROR WaitForWebPageContentError
+                        GOTO 'End The flow ALL other Factory'
+                    END
+                    @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... TrxSummary\'']['Input text \'numerictextbox\''] Text: CurrentBundleTag Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                    ON ERROR REPEAT 10 TIMES WAIT 3
+                    END
+                    WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... TrxSummary\'']['Input text \'datepicker\'']) 
+                    ON ERROR WaitForWebPageContentError
+                        GOTO 'End The flow ALL other Factory'
+                    END
+                    @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... TrxSummary\'']['Input text \'datepicker\''] Text: FormattedDateTime Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                    ON ERROR REPEAT 10 TIMES WAIT 3
+                    END
+                    LABEL 'Retry from View Point'
+                    WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... TrxSummary\'']['Button \'VIEW\''] WaitForPageToLoadTimeout: 60
+                    LABEL 'Retry from Excel Download Point'
+                    WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... TrxSummary\'']['Button \'Export grid\'']) FOR 2 
+                    ON ERROR WaitForWebPageContentError
+                        GOTO 'End The flow ALL other Factory'
+                    END
+                    WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... TrxSummary\'']['Button \'Export grid\''] WaitForPageToLoadTimeout: 60
+                    WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'Bundle Transaction Summary Enquiry - Google Chrome\'']['Window \'Save As\'']) FOR 20 
+                    ON ERROR WaitForWindowContentError
+                        GOTO 'End The flow ALL other Factory'
+                    ON ERROR TimeoutError
+                        GOTO 'Retry from Excel Download Point'
+                    END
+                    UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'Bundle Transaction Summary Enquiry - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%FormattedDateTime%-(%CurrentFactory%)-%CurrentBundleTag%.xlsx''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+                    UIAutomation.PressButton Button: appmask['Window \'Bundle Transaction Summary Enquiry - Google Chrome\'']['Button \'Save\''] Simulate: False
+                    WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%FormattedDateTime%-(%CurrentFactory%)-%CurrentBundleTag%.xlsx''') FOR 120 
+                    ON ERROR TimeoutError
+                        GOTO 'Retry from View Point'
+                    END
+                    LABEL 'End The flow ALL other Factory'
+                    IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%FormattedDateTime%-(%CurrentFactory%)-%CurrentBundleTag%.xlsx''') THEN
+                        Variables.AddItemToList Item: $'''%FormattedDateTime%-(%CurrentFactory%)-%CurrentBundleTag%''' List: Missing_Files
+                    END
+                END
+            END
+        END
+        WAIT 10
+        WebAutomation.CloseWebBrowser BrowserInstance: Browser
+    END
+    IF IsNotEmpty(Missing_Files) THEN
+        @@location: 'Chat with Flow bot'
+@@'InputSchema:body': '128740181'
+@@connectionDisplayName: 'RECONFIGURE_TEAMS_CONNECTION'
+External.InvokeCloudConnector Connection: '00000000-0000-0000-0000-000000000000' ConnectorId: '/providers/Microsoft.PowerApps/apis/shared_teams' OperationId: 'PostMessageToConversation' timeout: 60 @poster: $'''Flow bot''' @location: $'''Chat with Flow bot''' @'body/recipient': $'''operator@example.invalid''' @'body/messageBody': $'''<b>📊 Operational Daily Data for All Factory flow</b><br><br>
+
+Dear Hasan,<br><br>
+
+✅  Operational Daily Data for All Factory flow Completed Successfully. Execption to this files. Please manualy download this file and inject in the Database.<br><br>
+
+<b>Active Factories:</b><br>
+%ActiveFactorys%<br><br>
+
+<b>Completed On:</b><br>
+%CurrentDateTime%<br><br>
+
+<b>Closed Factory URLs:</b><br>
+%InactiveFactorys%<br><br>
+
+<b>Missing Files:</b><br>
+%Missing_Files%<br><br>
+
+https://factory-6.example.invalid <br><br>
+
+<b>Best Regards,</b><br>
+RPA Bot'''
+    ON ERROR REPEAT 5 TIMES WAIT 3
+    END
+    END
+END FUNCTION

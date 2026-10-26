@@ -1,0 +1,163 @@
+
+FUNCTION 'Tag WIP By Dept' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Div \'/Tag WIP by Department\'']) THEN
+        LOOP FOREACH Current_Processing_Stage_for_WIP IN Processing_Stage_for_WIP
+            IF Current_Processing_Stage_for_WIP = $'''FIN''' THEN
+                LOOP FOREACH Current_FIN_Depertment IN FIN_Depertment
+                    SET SubflowRetryCount TO 0
+                    SET MaxSubflowRetries TO 2
+                    SET DownloadSuccess TO $'''False'''
+                    LOOP WHILE SubflowRetryCount < MaxSubflowRetries AND DownloadSuccess = $'''False'''
+                        WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: DataTagWIPByDept WaitForPageToLoadTimeout: 60
+                        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Div \'FINProcess Stage *\'']) FOR 30
+                        ON ERROR WaitForWebPageContentError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP FIN'
+                        ON ERROR TimeoutError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP FIN'
+                        END
+                        WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Input text \'combobox\''] Text: Current_Processing_Stage_for_WIP Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                        ON ERROR REPEAT 10 TIMES WAIT 3
+                        END
+                        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Div \'[U4] FinishingDepartment *\'']) FOR 30
+                        ON ERROR WaitForWebPageContentError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP FIN'
+                        ON ERROR TimeoutError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP FIN'
+                        END
+                        WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Input text \'combobox\' 2'] Text: Current_FIN_Depertment Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                        ON ERROR REPEAT 10 TIMES WAIT 3
+                        END
+                        LABEL 'Retry Download for Tag WIP By Dept'
+                        WAIT 2
+                        WebAutomation.PressButton.PressButtonPressDialogButton BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Button \'VIEW\''] WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+                        ON ERROR PressButtonError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP FIN'
+                        END
+                        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Button \'Export grid\'']) FOR 10 
+                        ON ERROR WaitForWebPageContentError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP FIN'
+                        ON ERROR TimeoutError
+                            GOTO 'Retry Download for Tag WIP By Dept'
+                        END
+                        WebAutomation.PressButton.PressButtonNoWait BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Button \'Export grid\'']
+                        ON ERROR PressButtonError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP FIN'
+                        END
+                        WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'Tag WIP by Department - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+                        ON ERROR WaitForWindowContentError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP FIN'
+                        ON ERROR TimeoutError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP FIN'
+                        END
+                        UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'Tag WIP by Department - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Tag WIP By Dept (%Current_FIN_Depertment%).xlsx''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+                        UIAutomation.PressButton Button: appmask['Window \'Tag WIP by Department - Google Chrome\'']['Button \'Save\''] Simulate: False
+                        ON ERROR PressButtonError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP FIN'
+                        END
+                        WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Tag WIP By Dept (%Current_FIN_Depertment%).xlsx''') FOR 120 
+                        ON ERROR TimeoutError
+                            GOTO 'Retry Download for Tag WIP By Dept'
+                        END
+                        SET DownloadSuccess TO $'''True'''
+                        LABEL 'Retry Tag WIP FIN'
+                        IF DownloadSuccess = $'''False''' THEN
+                            WAIT 3
+                        END
+                    END
+                    IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Tag WIP By Dept (%Current_FIN_Depertment%).xlsx''') THEN
+                        Variables.AddItemToList Item: $'''❌ %CurrentFactory%-%FormattedDateTimeForNaming%-Tag WIP By Dept (%Current_FIN_Depertment%) - Failed after %MaxSubflowRetries% attempts''' List: Missing_Files
+                    END
+                END
+            ELSE IF Current_Processing_Stage_for_WIP = $'''SEW''' THEN
+                LOOP FOREACH Current_SEW_Depertment IN SEW_Depertment
+                    SET SubflowRetryCount TO 0
+                    SET MaxSubflowRetries TO 2
+                    SET DownloadSuccess TO $'''False'''
+                    LOOP WHILE SubflowRetryCount < MaxSubflowRetries AND DownloadSuccess = $'''False'''
+                        WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: DataTagWIPByDept WaitForPageToLoadTimeout: 60
+                        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Div \'FINProcess Stage *\'']) FOR 30
+                        ON ERROR WaitForWebPageContentError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP SEW'
+                        ON ERROR TimeoutError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP SEW'
+                        END
+                        WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Input text \'combobox\''] Text: Current_Processing_Stage_for_WIP Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                        ON ERROR REPEAT 10 TIMES WAIT 3
+                        END
+                        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Div \'[U4] FinishingDepartment *\'']) FOR 30
+                        ON ERROR WaitForWebPageContentError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP SEW'
+                        ON ERROR TimeoutError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP SEW'
+                        END
+                        WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Input text \'combobox\' 2'] Text: Current_SEW_Depertment Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                        ON ERROR REPEAT 10 TIMES WAIT 3
+                        END
+                        LABEL 'Retry Download for Tag WIP By Dept (2)'
+                        WAIT 2
+                        WebAutomation.PressButton.PressButtonPressDialogButton BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Button \'VIEW\''] WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+                        ON ERROR PressButtonError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP SEW'
+                        END
+                        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Button \'Export grid\'']) FOR 10 
+                        ON ERROR WaitForWebPageContentError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP SEW'
+                        ON ERROR TimeoutError
+                            GOTO 'Retry Download for Tag WIP By Dept (2)'
+                        END
+                        WebAutomation.PressButton.PressButtonNoWait BrowserInstance: Browser Control: appmask['Web Page \'h ... gWIPByDept\'']['Button \'Export grid\'']
+                        ON ERROR PressButtonError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP SEW'
+                        END
+                        WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'Tag WIP by Department - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+                        ON ERROR WaitForWindowContentError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP SEW'
+                        ON ERROR TimeoutError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP SEW'
+                        END
+                        UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'Tag WIP by Department - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Tag WIP By Dept (%Current_SEW_Depertment%).xlsx''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+                        UIAutomation.PressButton Button: appmask['Window \'Tag WIP by Department - Google Chrome\'']['Button \'Save\''] Simulate: False
+                        ON ERROR PressButtonError
+                            SET SubflowRetryCount TO SubflowRetryCount + 1
+                            GOTO 'Retry Tag WIP SEW'
+                        END
+                        WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Tag WIP By Dept (%Current_SEW_Depertment%).xlsx''') FOR 120 
+                        ON ERROR TimeoutError
+                            GOTO 'Retry Download for Tag WIP By Dept (2)'
+                        END
+                        SET DownloadSuccess TO $'''True'''
+                        LABEL 'Retry Tag WIP SEW'
+                        IF DownloadSuccess = $'''False''' THEN
+                            WAIT 3
+                        END
+                    END
+                    IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Tag WIP By Dept (%Current_SEW_Depertment%).xlsx''') THEN
+                        Variables.AddItemToList Item: $'''❌ %CurrentFactory%-%FormattedDateTimeForNaming%-Tag WIP By Dept (%Current_SEW_Depertment%) - Failed after %MaxSubflowRetries% attempts''' List: Missing_Files
+                    END
+                END
+            END
+        END
+        LABEL 'End of the flow'
+    ELSE
+        Variables.AddItemToList Item: $'''⚠️ %CurrentFactory% - Tag WIP By Dept - Report page not available''' List: Missing_Files
+    END
+END FUNCTION

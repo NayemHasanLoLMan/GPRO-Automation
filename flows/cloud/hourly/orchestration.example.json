@@ -1,0 +1,114 @@
+{
+  "format": "sanitized-orchestration-reference",
+  "importable": false,
+  "description": "Recreate in Power Automate; this is not a cloud import package.",
+  "recurrence": {
+    "frequency": "Week",
+    "interval": 1,
+    "timeZone": "Bangladesh Standard Time",
+    "schedule": {
+      "weekDays": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Saturday",
+        "Sunday"
+      ],
+      "hours": [
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22"
+      ],
+      "minutes": [
+        0
+      ]
+    }
+  },
+  "triggerRuntimeConfiguration": {
+    "concurrency": {
+      "runs": 20
+    }
+  },
+  "actions": [
+    {
+      "name": "Hourly_Run_the_EGMCL7_RPA",
+      "runAfter": {},
+      "timeout": "PT25M",
+      "kind": "desktop-flow",
+      "configurationRequired": true,
+      "runMode": "unattended",
+      "target": "SELECT_DESKTOP_FLOW_IN_YOUR_ENVIRONMENT",
+      "retryPolicy": {
+        "type": "none"
+      }
+    },
+    {
+      "name": "Send_Error_Massage_If_the_EGMC7_factory_download_data_Flow_Fails",
+      "runAfter": {
+        "Hourly_Run_the_EGMCL7_RPA": [
+          "TimedOut",
+          "Skipped",
+          "Failed"
+        ]
+      },
+      "timeout": null,
+      "kind": "teams-notification",
+      "configurationRequired": true,
+      "recipient": "operator@example.invalid"
+    },
+    {
+      "name": "Run_a_flow_built_with_Power_Automate_for_desktop",
+      "runAfter": {
+        "Hourly_Run_the_EGMCL7_RPA": [
+          "Succeeded",
+          "TimedOut",
+          "Failed",
+          "Skipped"
+        ]
+      },
+      "timeout": "PT35M",
+      "kind": "desktop-flow",
+      "configurationRequired": true,
+      "runMode": "unattended",
+      "target": "SELECT_DESKTOP_FLOW_IN_YOUR_ENVIRONMENT",
+      "retryPolicy": {
+        "type": "fixed",
+        "count": 3,
+        "interval": "PT30S"
+      }
+    },
+    {
+      "name": "Send_Error_Massage_if_all_factory_Quality_data_download_flow_fails",
+      "runAfter": {
+        "Run_a_flow_built_with_Power_Automate_for_desktop": [
+          "TimedOut",
+          "Skipped",
+          "Failed"
+        ]
+      },
+      "timeout": "PT5M",
+      "kind": "teams-notification",
+      "configurationRequired": true,
+      "recipient": "operator@example.invalid",
+      "retryPolicy": {
+        "type": "fixed",
+        "count": 3,
+        "interval": "PT5S"
+      }
+    }
+  ]
+}

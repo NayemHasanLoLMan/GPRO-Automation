@@ -1,0 +1,177 @@
+
+FUNCTION 'QCM 2001 - Top Defects' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Div \'/QCM2001 - Top Defects by Line\'']) THEN
+        SET SubflowRetryCount TO 0
+        SET MaxSubflowRetries TO 2
+        SET DownloadSuccess TO $'''False'''
+        LOOP WHILE SubflowRetryCount < MaxSubflowRetries AND DownloadSuccess = $'''False'''
+            WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data2001 WaitForPageToLoadTimeout: 60
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Div \'Department [7B] Sewing-RIB\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            END
+            WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Input text \'FTYU7_EGMCL\''] Text: $'''%' '%''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Div \'Buyer\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            END
+            WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Input text \'cmbDealer_2001\''] Text: $'''%' '%''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Label \'QC Checkpoint *\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            END
+            WebAutomation.ExecuteJavascript BrowserInstance: Browser Javascript: $'''function ExecuteScript() {
+    return new Promise(function (resolve) {
+        var attempts = 0, maxAttempts = 20, delayMs = 200; // ~4s ceiling
+
+        (function poll() {
+            var input = document.querySelector(\'#msCheckpoint_2001\');
+
+            if (!input) {
+                if (attempts++ < maxAttempts) { setTimeout(poll, delayMs); return; }
+                resolve(\"Error: Input not found after retries.\");
+                return;
+            }
+
+            // Use Syncfusion\'s own API to open the popup
+            if (input.ej2_instances && input.ej2_instances.length > 0) {
+                input.ej2_instances[0].showPopup();
+                resolve(\"Success: Opened via Syncfusion API.\");
+                return;
+            }
+
+            // Fallback: dispatch mouse events
+            var wrapper = input.closest(\'.e-multi-select-wrapper\');
+            if (wrapper) {
+                wrapper.dispatchEvent(new MouseEvent(\'mousedown\', { bubbles: true }));
+                wrapper.dispatchEvent(new MouseEvent(\'mouseup\',  { bubbles: true }));
+                wrapper.dispatchEvent(new MouseEvent(\'click\',    { bubbles: true }));
+                resolve(\"Success: Opened via mouse events.\");
+                return;
+            }
+
+            resolve(\"Error: Could not open dropdown.\");
+        })();
+    });
+}'''
+            ON ERROR REPEAT 5 TIMES WAIT 3
+            END
+            WebAutomation.ExecuteJavascript BrowserInstance: Browser Javascript: $'''function ExecuteScript() {
+    return new Promise(function (resolve) {
+        var targetValues = [%Checkpoints_QCM_2001%];
+        var attempts = 0, maxAttempts = 20, delayMs = 200; // ~4s ceiling
+
+        (function poll() {
+            var input = document.querySelector(\'#msCheckpoint_2001\');
+            var instance = (input && input.ej2_instances && input.ej2_instances.length > 0)
+                ? input.ej2_instances[0] : null;
+
+            if (!instance) {
+                if (attempts++ < maxAttempts) { setTimeout(poll, delayMs); return; }
+                resolve(input ? \"Error: Syncfusion instance not found after retries.\" : \"Error: Input not found after retries.\");
+                return;
+            }
+
+            var currentValues = instance.value ? Array.from(instance.value) : [];
+            var sameSet = currentValues.length === targetValues.length &&
+                targetValues.every(function (v) { return currentValues.indexOf(v) !== -1; });
+
+            if (sameSet) {
+                resolve(\"Skipped: Already selected.\");
+                return;
+            }
+
+            instance.value = [];
+            instance.value = targetValues;
+
+            resolve(\"Success: \" + instance.value.length + \" selected (\" + instance.value.join(\", \") + \").\");
+        })();
+    });
+}'''
+            ON ERROR REPEAT 5 TIMES WAIT 3
+            END
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Input text \'drp_2001\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            END
+            @@RepairWithAIVision: 'True'
+            WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Input text \'drp_2001\''] Text: $'''%FormattedDateTime% - %FormattedDateTime%''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 10 TIMES WAIT 3
+            END
+            WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Button \'VIEW\''] WaitForPageToLoadTimeout: 60
+            ON ERROR PressButtonError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            END
+            LABEL 'Wait for tool ber QCM 2001'
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Span \'viewer_toolbar_export\'']) FOR 60
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            END
+            WAIT 5
+            WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Span \'viewer_toolbar_export\''] WaitForPageToLoadTimeout: 60
+            ON ERROR PressButtonError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            END
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['List item \'Excel Export\'']) FOR 10 
+            ON ERROR REPEAT 5 TIMES WAIT 2
+            ON ERROR TimeoutError
+                GOTO 'Wait for tool ber QCM 2001'
+            END
+            WebAutomation.PressButton.PressButtonPressDialogButton BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['List item \'Excel Export\''] WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            ON ERROR PressButtonError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            END
+            WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'QCM2001 - Top Defects by Line - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+            ON ERROR WaitForWindowContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            END
+            UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'QCM2001 - Top Defects by Line - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Prod Group Top Defect for 2001.xlsx''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+            UIAutomation.PressButton Button: appmask['Window \'QCM2001 - Top Defects by Line - Google Chrome\'']['Button \'Save\''] Simulate: False
+            ON ERROR PressButtonError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry QCM 2001'
+            END
+            WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Prod Group Top Defect for 2001.xlsx''') FOR 120 
+            ON ERROR TimeoutError
+                GOTO 'Wait for tool ber QCM 2001'
+            END
+            SET DownloadSuccess TO $'''True'''
+            LABEL 'Retry QCM 2001'
+            IF DownloadSuccess = $'''False''' THEN
+                WAIT 3
+            END
+        END
+        IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Prod Group Top Defect for 2001.xlsx''') THEN
+            Variables.AddItemToList Item: $'''❌ %CurrentFactory%-%FormattedDateTimeForNaming%-Prod Group Top Defect for 2001 - Failed after %MaxSubflowRetries% attempts''' List: Missing_Files
+        END
+    ELSE
+        Variables.AddItemToList Item: $'''⚠️ %CurrentFactory% - QCM 2001 - Report page not available''' List: Missing_Files
+    END
+END FUNCTION

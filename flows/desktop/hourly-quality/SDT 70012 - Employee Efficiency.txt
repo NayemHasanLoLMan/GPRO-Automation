@@ -1,0 +1,98 @@
+
+FUNCTION 'SDT 70012 - Employee Efficiency' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Efficiency\'']['Div \'/70012 - Employee Efficiency Report\'']) THEN
+        SET SubflowRetryCount TO 0
+        SET MaxSubflowRetries TO 2
+        SET DownloadSuccess TO $'''False'''
+        LOOP WHILE SubflowRetryCount < MaxSubflowRetries AND DownloadSuccess = $'''False'''
+            WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data70012 WaitForPageToLoadTimeout: 60
+            WebAutomation.ExecuteJavascript BrowserInstance: Browser Javascript: $'''function ExecuteScript() {
+    return new Promise(function (resolve) {
+        var targets = [
+            \'[id*=\"chkBoxDefectQty\"]\'
+        ];
+        var results = [];
+        var i = 0;
+
+        function next() {
+            if (i >= targets.length) { resolve(results.join(\" | \")); return; }
+            var selector = targets[i];
+            var attempts = 0, maxAttempts = 20, delayMs = 200; // ~4s ceiling
+
+            (function poll() {
+                var input = document.querySelector(selector);
+                var wrapper = input && input.closest(\'.e-checkbox-wrapper\');
+                var checkSpan = wrapper && wrapper.querySelector(\'span.e-frame\');
+
+                if (checkSpan) {
+                    if (!checkSpan.classList.contains(\'e-check\')) {
+                        checkSpan.click();
+                        results.push(selector + \": Clicked\");
+                    } else {
+                        results.push(selector + \": Already checked\");
+                    }
+                    i++; next();
+                } else if (attempts++ < maxAttempts) {
+                    setTimeout(poll, delayMs);
+                } else {
+                    results.push(selector + \": Not found after retries\");
+                    i++; next();
+                }
+            })();
+        }
+        next();
+    });
+}'''
+            ON ERROR REPEAT 5 TIMES WAIT 3
+            END
+            WebAutomation.SelectRadioButton.SelectRadioButton BrowserInstance: Browser Control: appmask['Web Page \'h ... Efficiency\'']['Span \'On Std Efficiency\''] WaitForPageToLoadTimeout: 60
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Efficiency\'']['Div \'Date Range *\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70012'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70012'
+            END
+            @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... Efficiency\'']['Input text \'dtpDate_70012\''] Text: $'''%FormattedDateTime% - %FormattedDateTime%''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 10 TIMES WAIT 3
+            END
+            LABEL 'Re-try for SDT 70012'
+            WAIT 2
+            WebAutomation.PressButton.PressButtonPressDialogButton BrowserInstance: Browser Control: appmask['Web Page \'h ... Efficiency\'']['Button \'DOWNLOAD EXCEL\''] WaitForPageToLoadTimeout: 20 DialogButton: $'''OK'''
+            ON ERROR PressButtonError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70012'
+            END
+            WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'70012 - Employee Efficiency Report - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+            ON ERROR WaitForWindowContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70012'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70012'
+            END
+            UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'70012 - Employee Efficiency Report - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Employee Efficiency for 70012.xls''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+            UIAutomation.PressButton Button: appmask['Window \'70012 - Employee Efficiency Report - Google Chrome\'']['Button \'Save\''] Simulate: False
+            ON ERROR PressButtonError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70012'
+            END
+            WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Employee Efficiency for 70012.xls''') FOR 120 
+            ON ERROR TimeoutError
+                GOTO 'Re-try for SDT 70012'
+            END
+            SET DownloadSuccess TO $'''True'''
+            LABEL 'Retry Subflow 70012'
+            IF DownloadSuccess = $'''False''' THEN
+                WAIT 3
+            END
+        END
+        IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Employee Efficiency for 70012.xls''') THEN
+            Variables.AddItemToList Item: $'''❌ %CurrentFactory%-%FormattedDateTimeForNaming%-Employee Efficiency for 70012 - Failed after %MaxSubflowRetries% attempts''' List: Missing_Files
+        END
+    ELSE
+        Variables.AddItemToList Item: $'''⚠️ %CurrentFactory% - SDT 70012 - Report page not available''' List: Missing_Files
+    END
+END FUNCTION

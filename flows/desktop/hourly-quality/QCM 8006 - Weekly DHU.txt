@@ -1,0 +1,99 @@
+
+FUNCTION 'QCM 8006 - Weekly DHU' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\' 2']['Div \'/QCM8006 - Weekly DHU by Line\'']) THEN
+        WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8006 WaitForPageToLoadTimeout: 60
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\' 2']['Div \'Date Range *\''])
+        @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\' 2']['Input text \'drp_8006\' 2'] Text: $'''%FormattedDateTime% - %FormattedDateTime%''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+        ON ERROR REPEAT 10 TIMES WAIT 3
+        END
+        WebAutomation.ExecuteJavascript BrowserInstance: Browser Javascript: $'''function ExecuteScript() {
+    return new Promise(function (resolve) {
+        var targets = [
+        \'[id*=\"chkbShowDefectList_8006\"]\',
+        \'[id*=\"chkbShowSummaryFirst_8006\"]\'
+        ];
+        var results = [];
+        var i = 0;
+
+        function next() {
+            if (i >= targets.length) { resolve(results.join(\" | \")); return; }
+            var selector = targets[i];
+            var attempts = 0, maxAttempts = 20, delayMs = 200; // ~4s ceiling
+
+            (function poll() {
+                var input = document.querySelector(selector);
+                var wrapper = input && input.closest(\'.e-checkbox-wrapper\');
+                var checkSpan = wrapper && wrapper.querySelector(\'span.e-frame\');
+
+                if (checkSpan) {
+                    if (!checkSpan.classList.contains(\'e-check\')) {
+                        checkSpan.click();
+                        results.push(selector + \": Clicked\");
+                    } else {
+                        results.push(selector + \": Already checked\");
+                    }
+                    i++; next();
+                } else if (attempts++ < maxAttempts) {
+                    setTimeout(poll, delayMs);
+                } else {
+                    results.push(selector + \": Not found after retries\");
+                    i++; next();
+                }
+            })();
+        }
+        next();
+    });
+}'''
+        ON ERROR REPEAT 5 TIMES WAIT 3
+        END
+        SET DHU_Weekly_Checkpoint TO ['END LINE QI', 'FIN TOP SIDE QC']
+        LOOP FOREACH Current_DHU_Weekly_Checkpoint IN DHU_Weekly_Checkpoint
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\' 2']['Div \'END LINE QIQC Checkpoint *\''])
+            WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\' 2']['Input text \'SEWING ENDLINE QC\''] Text: Current_DHU_Weekly_Checkpoint Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 10 TIMES WAIT 3
+            END
+            WebAutomation.PressButton.PressButtonPressDialogButton BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Button \'VIEW\''] WaitForPageToLoadTimeout: 20 DialogButton: $'''OK'''
+            ON ERROR REPEAT 5 TIMES WAIT 2
+            ON ERROR PressButtonError
+                GOTO 'End the subflow'
+            END
+            LABEL 'Re-try for QCM 8006'
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Span \'viewer_toolbar_export\''])
+            WAIT 5
+            WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... pTopDefect\'']['Span \'viewer_toolbar_export\''] WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 5 TIMES WAIT 2
+            ON ERROR PressButtonError
+                GOTO 'End the subflow'
+            END
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\' 2']['List item \'Excel Export\'']) FOR 5 
+            ON ERROR TimeoutError
+                GOTO 'Re-try for QCM 8006'
+            END
+            WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... yDHUByLine\' 2']['List item \'Excel Export\''] WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 5 TIMES WAIT 2
+            ON ERROR PressButtonError
+                GOTO 'End the subflow'
+            END
+            WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'QCM8006 - Weekly DHU by Line - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+            ON ERROR WaitForWindowContentError
+                GOTO 'End the subflow'
+            ON ERROR TimeoutError
+                GOTO 'End the subflow'
+            END
+            UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'QCM8006 - Weekly DHU by Line - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-DHU By Line Weekly for 8006 (%Current_DHU_Weekly_Checkpoint%).xlsx''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+            UIAutomation.PressButton Button: appmask['Window \'QCM8006 - Weekly DHU by Line - Google Chrome\'']['Button \'Save\''] Simulate: False
+            ON ERROR PressButtonError
+                GOTO 'End the subflow'
+            END
+            WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-DHU By Line Weekly for 8006 (%Current_DHU_Weekly_Checkpoint%).xlsx''') FOR 120 
+            ON ERROR TimeoutError
+                GOTO 'Re-try for QCM 8006'
+            END
+            LABEL 'End the subflow'
+            IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-DHU By Line Weekly for 8006 (%Current_DHU_Weekly_Checkpoint%).xlsx''') THEN
+                Variables.AddItemToList Item: $'''%CurrentFactory%-%FormattedDateTimeForNaming%-DHU By Line Weekly for 8006 (%Current_DHU_Weekly_Checkpoint%)''' List: Missing_Files
+            END
+        END
+    END
+END FUNCTION

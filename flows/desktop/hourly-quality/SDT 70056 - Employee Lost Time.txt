@@ -1,0 +1,84 @@
+
+FUNCTION 'SDT 70056 - Employee Lost Time' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... eeLostTime\'']['Div \'/70056 - Employee Lost Time\'']) THEN
+        LOOP FOREACH CurrentDepertmentStage IN Depertment_SDT_70056
+            SET SubflowRetryCount TO 0
+            SET MaxSubflowRetries TO 2
+            SET DownloadSuccess TO $'''False'''
+            LOOP WHILE SubflowRetryCount < MaxSubflowRetries AND DownloadSuccess = $'''False'''
+                WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data70056 WaitForPageToLoadTimeout: 60
+                WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... eeLostTime\'']['Div \'Shift General\'']) FOR 30
+                ON ERROR WaitForWebPageContentError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    GOTO 'Retry Dept 70056'
+                ON ERROR TimeoutError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    GOTO 'Retry Dept 70056'
+                END
+                @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... eeLostTime\'']['Input text \'combobox\' 2'] Text: Shift Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                ON ERROR REPEAT 10 TIMES WAIT 3
+                END
+                WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... eeLostTime\'']['Div \'Date *\'']) FOR 30
+                ON ERROR WaitForWebPageContentError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    GOTO 'Retry Dept 70056'
+                ON ERROR TimeoutError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    GOTO 'Retry Dept 70056'
+                END
+                @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... eeLostTime\'']['Input text \'dtpDate_70056emplost\''] Text: $'''%FormattedDateTime% - %FormattedDateTime%''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                ON ERROR REPEAT 10 TIMES WAIT 3
+                END
+                WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... eeLostTime\'']['Div \'[7A] Sewing-RIBDepartment *\'']) FOR 30
+                ON ERROR WaitForWebPageContentError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    GOTO 'Retry Dept 70056'
+                ON ERROR TimeoutError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    GOTO 'Retry Dept 70056'
+                END
+                @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... eeLostTime\'']['Input text \'combobox\''] Text: CurrentDepertmentStage Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+                ON ERROR REPEAT 10 TIMES WAIT 3
+                END
+                LABEL 'Retry Download for SDT 70056'
+                WAIT 2
+                WebAutomation.PressButton.PressButtonPressDialogButton BrowserInstance: Browser Control: appmask['Web Page \'h ... eeLostTime\'']['Button \'DOWNLOAD EXCEL\''] WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+                ON ERROR PressButtonError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    GOTO 'Retry Dept 70056'
+                END
+                WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'70056 - Employee Lost Time - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+                ON ERROR WaitForWindowContentError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    GOTO 'Retry Dept 70056'
+                ON ERROR TimeoutError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    GOTO 'Retry Dept 70056'
+                END
+                UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'70056 - Employee Lost Time - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Employee Lost Timer for 70056 (%CurrentDepertmentStage%).xls''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+                UIAutomation.PressButton Button: appmask['Window \'70056 - Employee Lost Time - Google Chrome\'']['Button \'Save\''] Simulate: False
+                ON ERROR PressButtonError
+                    SET SubflowRetryCount TO SubflowRetryCount + 1
+                    GOTO 'Retry Dept 70056'
+                END
+                WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Employee Lost Timer for 70056 (%CurrentDepertmentStage%).xls''') FOR 120 
+                ON ERROR TimeoutError
+                    GOTO 'Retry Download for SDT 70056'
+                END
+                SET DownloadSuccess TO $'''True'''
+                LABEL 'Retry Dept 70056'
+                IF DownloadSuccess = $'''False''' THEN
+                    WAIT 3
+                END
+            END
+            IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Employee Lost Timer for 70056 (%CurrentDepertmentStage%).xls''') THEN
+                Variables.AddItemToList Item: $'''❌ %CurrentFactory%-%FormattedDateTimeForNaming%-Employee Lost Timer for 70056 (%CurrentDepertmentStage%) - Failed after %MaxSubflowRetries% attempts''' List: Missing_Files
+            END
+        END
+    ELSE
+        Variables.AddItemToList Item: $'''⚠️ %CurrentFactory% - SDT 70056 - Report page not available''' List: Missing_Files
+    END
+END FUNCTION

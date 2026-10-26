@@ -1,0 +1,96 @@
+{
+  "format": "sanitized-orchestration-reference",
+  "importable": false,
+  "description": "Recreate in Power Automate; this is not a cloud import package.",
+  "recurrence": {
+    "frequency": "Week",
+    "interval": "1",
+    "schedule": {
+      "weekDays": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Saturday",
+        "Sunday"
+      ],
+      "hours": [
+        "22"
+      ],
+      "minutes": [
+        30
+      ]
+    },
+    "timeZone": "Bangladesh Standard Time"
+  },
+  "triggerRuntimeConfiguration": {
+    "concurrency": {
+      "runs": 20
+    }
+  },
+  "actions": [
+    {
+      "name": "Operational_All_Factory_Daily_Data_Download",
+      "runAfter": {},
+      "timeout": "PT30M",
+      "kind": "desktop-flow",
+      "configurationRequired": true,
+      "runMode": "unattended",
+      "target": "SELECT_DESKTOP_FLOW_IN_YOUR_ENVIRONMENT",
+      "retryPolicy": {
+        "type": "fixed",
+        "count": 2,
+        "interval": "PT1M"
+      }
+    },
+    {
+      "name": "Quality_All_Factory_Daily_Data_Download",
+      "runAfter": {
+        "Operational_All_Factory_Daily_Data_Download": [
+          "Succeeded",
+          "TimedOut",
+          "Skipped",
+          "Failed"
+        ]
+      },
+      "timeout": "PT125M",
+      "kind": "desktop-flow",
+      "configurationRequired": true,
+      "runMode": "unattended",
+      "target": "SELECT_DESKTOP_FLOW_IN_YOUR_ENVIRONMENT",
+      "retryPolicy": {
+        "type": "fixed",
+        "count": 2,
+        "interval": "PT30S"
+      }
+    },
+    {
+      "name": "Send_Error_massage_for_Operational",
+      "runAfter": {
+        "Operational_All_Factory_Daily_Data_Download": [
+          "TimedOut",
+          "Failed",
+          "Skipped"
+        ]
+      },
+      "timeout": null,
+      "kind": "teams-notification",
+      "configurationRequired": true,
+      "recipient": "operator@example.invalid"
+    },
+    {
+      "name": "Send_Error_Massage_for_Quality",
+      "runAfter": {
+        "Quality_All_Factory_Daily_Data_Download": [
+          "TimedOut",
+          "Skipped",
+          "Failed"
+        ]
+      },
+      "timeout": null,
+      "kind": "teams-notification",
+      "configurationRequired": true,
+      "recipient": "operator@example.invalid"
+    }
+  ]
+}

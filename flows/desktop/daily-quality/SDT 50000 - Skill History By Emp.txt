@@ -1,0 +1,58 @@
+
+FUNCTION 'SDT 50000 - Skill History By Emp' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ByEmployee\'']['Div \'/50000 - Skill History By Employee\'']) THEN
+        WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data50000 WaitForPageToLoadTimeout: 60
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ByEmployee\'']['Div \'Date *\'']) 
+        ON ERROR WaitForWebPageContentError
+            GOTO 'End the Subflow'
+        END
+        @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... ByEmployee\'']['Input text \'dtpDate_50000\''] Text: $'''%FormattedDateTime% - %FormattedDateTime%''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+        ON ERROR REPEAT 10 TIMES WAIT 3
+        END
+        WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... ByEmployee\'']['Button \'VIEW\''] WaitForPageToLoadTimeout: 60
+        ON ERROR PressButtonError
+            GOTO 'End the Subflow'
+        END
+        LABEL 'Retry for SDT 50000'
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ByEmployee\'']['Span \'viewer_toolbar_export\'']) 
+        ON ERROR WaitForWebPageContentError
+            GOTO 'End the Subflow'
+        END
+        WAIT 5
+        WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... ByEmployee\'']['Span \'viewer_toolbar_export\''] WaitForPageToLoadTimeout: 60
+        ON ERROR PressButtonError
+            GOTO 'End the Subflow'
+        END
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ByEmployee\' 2']['List item \'Excel Export\'']) FOR 2 
+        ON ERROR WaitForWebPageContentError
+            GOTO 'End the Subflow'
+        ON ERROR TimeoutError
+            GOTO 'Retry for SDT 50000'
+        END
+        DISABLE WebAutomation.Click.ClickPressDialogButton BrowserInstance: Browser Control: appmask['Web Page \'h ... ByEmployee\' 2']['List item \'Excel Export\''] ClickType: WebAutomation.ClickType.LeftClick MouseClick: True WaitForPageToLoadTimeout: 60 DialogButton: $'''OK''' MousePositionRelativeToElement: WebAutomation.RectangleEdgePoint.MiddleCenter OffsetX: 0 OffsetY: 0
+        WebAutomation.PressButton.PressButtonNoWait BrowserInstance: Browser Control: appmask['Web Page \'h ... ByEmployee\' 2']['List item \'Excel Export\'']
+        ON ERROR PressButtonError
+            GOTO 'End the Subflow'
+        END
+        WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'50000 - Skill History By Employee - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+        ON ERROR WaitForWindowContentError
+            GOTO 'End the Subflow'
+        ON ERROR TimeoutError
+            GOTO 'End the Subflow'
+        END
+        UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'50000 - Skill History By Employee - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Skill History By Emp for 70045.xlsx''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+        UIAutomation.PressButton Button: appmask['Window \'50000 - Skill History By Employee - Google Chrome\'']['Button \'Save\''] Simulate: False
+        ON ERROR PressButtonError
+            GOTO 'End the Subflow'
+        END
+        WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Skill History By Emp for 70045.xlsx''') FOR 120 
+        ON ERROR TimeoutError
+            GOTO 'Retry for SDT 50000'
+        END
+        LABEL 'End the Subflow'
+        IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Skill History By Emp for 70045.xlsx''') THEN
+            Variables.AddItemToList Item: $'''%CurrentFactory%-%FormattedDateTimeForNaming%-Skill History By Emp for 70045''' List: Missing_Files
+        END
+    END
+END FUNCTION

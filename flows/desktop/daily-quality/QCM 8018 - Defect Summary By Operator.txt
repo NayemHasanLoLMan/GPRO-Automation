@@ -1,0 +1,83 @@
+
+FUNCTION 'QCM 8018 - Defect Summary By Operator' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['Div \'/QCM8018 - Defect Summary by Operator\'']) THEN
+        WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data8018 WaitForPageToLoadTimeout: 60
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['Div \'Date Range *\'']) 
+        ON ERROR WaitForWebPageContentError
+            GOTO 'End of the flow'
+        END
+        @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['Input text \'DateRange_8018\''] Text: $'''%FormattedDateTime% - %FormattedDateTime%''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+        ON ERROR REPEAT 10 TIMES WAIT 3
+        END
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['Div \'-Factory *\'']) 
+        ON ERROR WaitForWebPageContentError
+            GOTO 'End of the flow'
+        END
+        @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['Input text \'-\''] Text: Factory_Name Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+        ON ERROR REPEAT 10 TIMES WAIT 3
+        END
+        LOOP FOREACH CurrentDepertmentStage IN Depertment_QCM_8018
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['Div \'[7A] Sewing-RIBDepartment *\'']) 
+            ON ERROR WaitForWebPageContentError
+                GOTO 'End the loop of this subflow'
+            END
+            @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['Input text \'[7A] Sewing-RIB\''] Text: CurrentDepertmentStage Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 10 TIMES WAIT 3
+            END
+            WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['Button \'VIEW\''] WaitForPageToLoadTimeout: 60
+            ON ERROR PressButtonError
+                GOTO 'End the loop of this subflow'
+            END
+            LABEL 'Retry Download for QCM 8018'
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['List item \'Export\'']) 
+            ON ERROR WaitForWebPageContentError
+                GOTO 'End the loop of this subflow'
+            END
+            WAIT 5
+            WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['List item \'Export\''] WaitForPageToLoadTimeout: 60
+            ON ERROR PressButtonError
+                GOTO 'End the loop of this subflow'
+            END
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['List item \'Excel Export\'']) FOR 2 
+            ON ERROR REPEAT 5 TIMES WAIT 2
+            ON ERROR WaitForWebPageContentError
+                GOTO 'End the loop of this subflow'
+            ON ERROR TimeoutError
+                GOTO 'Retry Download for QCM 8018'
+            END
+            WebAutomation.PressButton.PressButtonPressDialogButton BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\'']['List item \'Excel Export\''] WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            ON ERROR PressButtonError
+                GOTO 'End the loop of this subflow'
+            END
+            WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'Defect Summary by Operator - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+            ON ERROR WaitForWindowContentError
+                GOTO 'End the loop of this subflow'
+            ON ERROR TimeoutError
+                GOTO 'End the loop of this subflow'
+            END
+            UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'Defect Summary by Operator - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Defect Summary By Operator for 8018 (%CurrentDepertmentStage%).xls''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+            UIAutomation.PressButton Button: appmask['Window \'Defect Summary by Operator - Google Chrome\'']['Button \'Save\''] Simulate: False
+            ON ERROR PressButtonError
+                GOTO 'End the loop of this subflow'
+            END
+            WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Defect Summary By Operator for 8018 (%CurrentDepertmentStage%).xls''') FOR 120 
+            ON ERROR TimeoutError
+                GOTO 'Retry Download for QCM 8018'
+            END
+            LABEL 'End the loop of this subflow'
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\' 2']['Button \'Filters\'']) FOR 2 
+            ON ERROR REPEAT 5 TIMES WAIT 2
+            ON ERROR WaitForWebPageContentError
+                GOTO 'End of the flow'
+            END
+            WebAutomation.PressButton.PressButtonPressDialogButton BrowserInstance: Browser Control: appmask['Web Page \'h ... ByOperator\' 2']['Button \'Filters\''] WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Defect Summary By Operator for 8018 (%CurrentDepertmentStage%).xls''') THEN
+                Variables.AddItemToList Item: $'''%CurrentFactory%-%FormattedDateTimeForNaming%-Defect Summary By Operator for 8018 (%CurrentDepertmentStage%)''' List: Missing_Files
+            END
+        END
+        LABEL 'End of the flow'
+    END
+END FUNCTION

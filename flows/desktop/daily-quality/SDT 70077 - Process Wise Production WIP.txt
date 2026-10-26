@@ -1,0 +1,57 @@
+
+FUNCTION 'SDT 70077 - Process Wise Production WIP ' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ductionWIP\'']['Div \'/70077 - Process Wise Production WIP\'']) THEN
+        WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data70077 WaitForPageToLoadTimeout: 60
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ductionWIP\'']['Div \'Date *\'']) 
+        ON ERROR WaitForWebPageContentError
+            GOTO 'End of the Flow'
+        END
+        @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... ductionWIP\'']['Input text \'datepicker\''] Text: FormattedDateTime Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+        ON ERROR REPEAT 10 TIMES WAIT 3
+        END
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ductionWIP\'']['Div \'Production Flow Template *\'']) 
+        ON ERROR WaitForWebPageContentError
+            GOTO 'End of the Flow'
+        END
+        @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... ductionWIP\'']['Input text \'combobox\''] Text: $'''STD_ORD''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+        ON ERROR REPEAT 10 TIMES WAIT 3
+        END
+        LOOP FOREACH CurrentProcessStage IN ProcessStage_SDT_70077
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... ductionWIP\'']['Div \'WASHProcess Stage *\'']) 
+            ON ERROR WaitForWebPageContentError
+                GOTO 'End the loop of this subflow'
+            END
+            @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... ductionWIP\'']['Input text \'combobox\' 2'] Text: CurrentProcessStage Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 10 TIMES WAIT 3
+            END
+            LABEL 'Retry Download for SDT 70077'
+            WebAutomation.PressButton.PressButtonPressDialogButton BrowserInstance: Browser Control: appmask['Web Page \'h ... ductionWIP\'']['Button \'DOWNLOAD EXCEL\''] WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            ON ERROR PressButtonError
+                GOTO 'End the loop of this subflow'
+            END
+            WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'70077 -  ...  WIP - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+            ON ERROR WaitForWindowContentError
+                GOTO 'End the loop of this subflow'
+            ON ERROR TimeoutError
+                GOTO 'End the loop of this subflow'
+            END
+            UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'70077 -  ...  WIP - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Process Wise Production WIP for 70077 (%CurrentProcessStage%).xls''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+            UIAutomation.PressButton Button: appmask['Window \'70077 -  ...  WIP - Google Chrome\'']['Button \'Save\''] Simulate: False
+            ON ERROR PressButtonError
+                GOTO 'End the loop of this subflow'
+            END
+            WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Process Wise Production WIP for 70077 (%CurrentProcessStage%).xls''') FOR 120 
+            ON ERROR TimeoutError
+                GOTO 'Retry Download for SDT 70077'
+            END
+            LABEL 'End the loop of this subflow'
+            IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Process Wise Production WIP for 70077 (%CurrentProcessStage%).xls''') THEN
+                Variables.AddItemToList Item: $'''%CurrentFactory%-%FormattedDateTimeForNaming%-Process Wise Production WIP for 70077 (%CurrentProcessStage%)''' List: Missing_Files
+            END
+        END
+        LABEL 'End of the Flow'
+    END
+END FUNCTION

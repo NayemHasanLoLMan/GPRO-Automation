@@ -1,0 +1,219 @@
+
+FUNCTION 'SDT 70045 - Hourly Output' GLOBAL
+    IF (WebAutomation.IfWebPageContains.WebPageContainsElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['Div \'/70045 - Hourly Output by Checkpoint\'']) THEN
+        SET SubflowRetryCount TO 0
+        SET MaxSubflowRetries TO 2
+        SET DownloadSuccess TO $'''False'''
+        LOOP WHILE SubflowRetryCount < MaxSubflowRetries AND DownloadSuccess = $'''False'''
+            WebAutomation.GoToWebPage.GoToWebPage BrowserInstance: Browser Url: Data70045 WaitForPageToLoadTimeout: 60
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['Div \'GeneralShift *\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70045'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70045'
+            END
+            @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['Input text \'combobox\''] Text: Shift Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 10 TIMES WAIT 3
+            END
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['Div \'SewingDepartment\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70045'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70045'
+            END
+            @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['Input text \'combobox\' 2'] Text: $'''%' '%''' Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+            ON ERROR REPEAT 10 TIMES WAIT 3
+            END
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['Div \'Checkpoints\'']) FOR 30
+            ON ERROR WaitForWebPageContentError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70045'
+            ON ERROR TimeoutError
+                SET SubflowRetryCount TO SubflowRetryCount + 1
+                GOTO 'Retry Subflow 70045'
+            END
+        WebAutomation.ExecuteJavascript BrowserInstance: Browser Javascript: $'''function ExecuteScript() {
+    return new Promise(function (resolve) {
+        var attempts = 0, maxAttempts = 20, delayMs = 200; // ~4s ceiling
+
+        (function poll() {
+            var input = document.querySelector(\'#msCheckpoint_70045\');
+
+            if (!input) {
+                if (attempts++ < maxAttempts) { setTimeout(poll, delayMs); return; }
+                resolve(\"Error: Input not found after retries.\");
+                return;
+            }
+
+            // Use Syncfusion\'s own API to open the popup
+            if (input.ej2_instances && input.ej2_instances.length > 0) {
+                input.ej2_instances[0].showPopup();
+                resolve(\"Success: Opened via Syncfusion API.\");
+                return;
+            }
+
+            // Fallback: dispatch mouse events
+            var wrapper = input.closest(\'.e-multi-select-wrapper\');
+            if (wrapper) {
+                wrapper.dispatchEvent(new MouseEvent(\'mousedown\', { bubbles: true }));
+                wrapper.dispatchEvent(new MouseEvent(\'mouseup\',  { bubbles: true }));
+                wrapper.dispatchEvent(new MouseEvent(\'click\',    { bubbles: true }));
+                resolve(\"Success: Opened via mouse events.\");
+                return;
+            }
+
+            resolve(\"Error: Could not open dropdown.\");
+        })();
+    });
+}'''
+        ON ERROR REPEAT 5 TIMES WAIT 3
+        END
+        WebAutomation.ExecuteJavascript BrowserInstance: Browser Javascript: $'''function ExecuteScript() {
+    return new Promise(function (resolve) {
+        var targetValues = [\"SEWING ENDLINE QC\", \"FIN OUT\"];
+        var attempts = 0, maxAttempts = 20, delayMs = 200; // ~4s ceiling
+
+        (function poll() {
+            var input = document.querySelector(\'#msCheckpoint_70045\');
+            var instance = (input && input.ej2_instances && input.ej2_instances.length > 0)
+                ? input.ej2_instances[0] : null;
+
+            if (!instance) {
+                if (attempts++ < maxAttempts) { setTimeout(poll, delayMs); return; }
+                resolve(input ? \"Error: Syncfusion instance not found after retries.\" : \"Error: Input not found after retries.\");
+                return;
+            }
+
+            var currentValues = instance.value ? Array.from(instance.value) : [];
+            var sameSet = currentValues.length === targetValues.length &&
+                targetValues.every(function (v) { return currentValues.indexOf(v) !== -1; });
+
+            if (sameSet) {
+                resolve(\"Skipped: Already selected.\");
+                return;
+            }
+
+            instance.value = [];
+            instance.value = targetValues;
+
+            resolve(\"Success: \" + instance.value.length + \" selected (\" + instance.value.join(\", \") + \").\");
+        })();
+    });
+}'''
+        ON ERROR REPEAT 5 TIMES WAIT 3
+        END
+        WebAutomation.ExecuteJavascript BrowserInstance: Browser Javascript: $'''function ExecuteScript() {
+    return new Promise(function (resolve) {
+        var targets = [
+            \'[id*=\"chkbIncludeBreakTime\"]\',
+            \'[id*=\"chkbShowTargetDetails\"]\',
+            \'[id*=\"chkbShowOrderDetails\"]\'
+        ];
+        var results = [];
+        var i = 0;
+
+        function next() {
+            if (i >= targets.length) { resolve(results.join(\" | \")); return; }
+            var selector = targets[i];
+            var attempts = 0, maxAttempts = 20, delayMs = 200; // ~4s ceiling
+
+            (function poll() {
+                var input = document.querySelector(selector);
+                var wrapper = input && input.closest(\'.e-checkbox-wrapper\');
+                var checkSpan = wrapper && wrapper.querySelector(\'span.e-frame\');
+
+                if (checkSpan) {
+                    if (!checkSpan.classList.contains(\'e-check\')) {
+                        checkSpan.click();
+                        results.push(selector + \": Clicked\");
+                    } else {
+                        results.push(selector + \": Already checked\");
+                    }
+                    i++; next();
+                } else if (attempts++ < maxAttempts) {
+                    setTimeout(poll, delayMs);
+                } else {
+                    results.push(selector + \": Not found after retries\");
+                    i++; next();
+                }
+            })();
+        }
+        next();
+    });
+}'''
+        ON ERROR REPEAT 5 TIMES WAIT 3
+        END
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['Input text \'datepicker\'']) FOR 30
+        ON ERROR WaitForWebPageContentError
+            SET SubflowRetryCount TO SubflowRetryCount + 1
+            GOTO 'Retry Subflow 70045'
+        ON ERROR TimeoutError
+            SET SubflowRetryCount TO SubflowRetryCount + 1
+            GOTO 'Retry Subflow 70045'
+        END
+        @@RepairWithAIVision: 'True'
+WebAutomation.PopulateTextField.PopulateTextFieldUsePhysicalKeyboard BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['Input text \'datepicker\''] Text: FormattedDateTime Mode: WebAutomation.PopulateTextMode.Replace UnfocusAfterPopulate: True WaitForPageToLoadTimeout: 60
+        ON ERROR REPEAT 10 TIMES WAIT 3
+        END
+        WAIT 2
+        WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['Button \'VIEW REPORT\''] WaitForPageToLoadTimeout: 60
+        ON ERROR PressButtonError
+            SET SubflowRetryCount TO SubflowRetryCount + 1
+            GOTO 'Retry Subflow 70045'
+        END
+        LABEL 'Wait for tool ber SDT 70045'
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['Span \'viewer_toolbar_export\'']) FOR 60
+        ON ERROR WaitForWebPageContentError
+            SET SubflowRetryCount TO SubflowRetryCount + 1
+            GOTO 'Retry Subflow 70045'
+        ON ERROR TimeoutError
+            SET SubflowRetryCount TO SubflowRetryCount + 1
+            GOTO 'Retry Subflow 70045'
+        END
+        WAIT 5
+        WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['List item \'Export\''] WaitForPageToLoadTimeout: 60
+        WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['Span \'Excel\'']) FOR 2 
+        ON ERROR REPEAT 5 TIMES WAIT 2
+        ON ERROR WaitForWebPageContentError
+            GOTO 'Wait for tool ber SDT 70045'
+        ON ERROR TimeoutError
+            GOTO 'Wait for tool ber SDT 70045'
+        END
+        WebAutomation.PressButton.PressButton BrowserInstance: Browser Control: appmask['Web Page \'h ... Checkpoint\'']['List item \'Excel Export\''] WaitForPageToLoadTimeout: 60
+        WAIT (UIAutomation.WaitForWindowContent.WindowToContainElement Element: appmask['Window \'70045 -  ...  - Google Chrome\'']['Window \'Save As\'']) FOR 300 
+        ON ERROR WaitForWindowContentError
+            SET SubflowRetryCount TO SubflowRetryCount + 1
+            GOTO 'Retry Subflow 70045'
+        ON ERROR TimeoutError
+            SET SubflowRetryCount TO SubflowRetryCount + 1
+            GOTO 'Retry Subflow 70045'
+        END
+        UIAutomation.PopulateTextField.PopulateTextField TextField: appmask['Window \'70045 -  ...  - Google Chrome\'']['Edit \'File name:\''] Text: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Hourly Report for 70045.xls''' Mode: UIAutomation.PopulateTextMode.Replace ClickType: UIAutomation.PopulateMouseClickType.SingleClick
+        UIAutomation.PressButton Button: appmask['Window \'70045 -  ...  - Google Chrome\'']['Button \'Save\''] Simulate: False
+        ON ERROR PressButtonError
+            SET SubflowRetryCount TO SubflowRetryCount + 1
+            GOTO 'Retry Subflow 70045'
+        END
+        WAIT (File.WaitForFile.Created File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Hourly Report for 70045.xls''') FOR 120 
+        ON ERROR TimeoutError
+            GOTO 'Wait for tool ber SDT 70045'
+        END
+        SET DownloadSuccess TO $'''True'''
+        LABEL 'Retry Subflow 70045'
+        IF DownloadSuccess = $'''False''' THEN
+            WAIT 3
+        END
+        END
+        IF (File.IfFile.DoesNotExist File: $'''%Download_Path%\\%CurrentFactory%-%FormattedDateTimeForNaming%-Hourly Report for 70045.xls''') THEN
+            Variables.AddItemToList Item: $'''❌ %CurrentFactory%-%FormattedDateTimeForNaming%-Hourly Report for 70045 - Failed after %MaxSubflowRetries% attempts''' List: Missing_Files
+        END
+    ELSE
+        Variables.AddItemToList Item: $'''⚠️ %CurrentFactory% - SDT 70045 - Report page not available''' List: Missing_Files
+    END
+END FUNCTION

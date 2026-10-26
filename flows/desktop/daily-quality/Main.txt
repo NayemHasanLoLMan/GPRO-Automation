@@ -1,0 +1,251 @@
+
+FUNCTION Main_copy GLOBAL
+    Scripting.RunPowershellScript.RunScriptAndFailOnTimeout Script: $'''Get-Process chrome,msedge,firefox,brave,opera,ms-teams,Teams -ErrorAction SilentlyContinue | Stop-Process -Force''' Timeout: 120
+ON ERROR
+
+END
+    DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> CurrentDateTime
+    Text.ConvertDateTimeToText.FromCustomDateTime DateTime: CurrentDateTime CustomFormat: $'''dd-MMM-yyyy''' Result=> FormattedDateTime
+    Text.ConvertDateTimeToText.FromCustomDateTime DateTime: CurrentDateTime CustomFormat: $'''dd-MMM-yyyy (hh tt)''' Result=> FormattedDateTimeForNaming
+    SET Download_Path TO $'''C:\GPRO\output'''
+    DISABLE SET Download_Path TO $'''C:\GPRO\output'''
+    SET ListOfSites TO ['https://factory-1.example.invalid', 'https://factory-2.example.invalid', 'https://factory-3.example.invalid', 'https://factory-4.example.invalid', 'https://factory-5.example.invalid']
+    Variables.CreateNewList List=> FailedURL
+    Variables.CreateNewList List=> WorkingURL
+    Variables.CreateNewList List=> ActiveFactorys
+    Variables.CreateNewList List=> InactiveFactorys
+    Variables.CreateNewList List=> Missing_Files
+    DISABLE Folder.GetFiles Folder: Download_Path FileFilter: $'''*''' IncludeSubfolders: False FailOnAccessDenied: True SortBy1: Folder.SortBy.NoSort SortDescending1: False SortBy2: Folder.SortBy.NoSort SortDescending2: False SortBy3: Folder.SortBy.NoSort SortDescending3: False Files=> CleanList
+    DISABLE File.Delete Files: CleanList
+    LOOP FOREACH CurrentURL IN ListOfSites
+        SET StatusCode TO 0
+        Web.InvokeWebService.InvokeWebService Url: CurrentURL Method: Web.Method.Get Accept: $'''application/xml''' ContentType: $'''application/xml''' ConnectionTimeout: 30 FollowRedirection: True ClearCookies: False FailOnErrorStatus: False EncodeRequestBody: True UserAgent: $'''Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.21) Gecko/20100312 Firefox/3.6''' Encoding: Web.Encoding.AutoDetect AcceptUntrustedCertificates: False TrimRequestBody: True StatusCode=> StatusCode
+    ON ERROR REPEAT 5 TIMES WAIT 3
+    ON ERROR
+
+    END
+        IF StatusCode = 200 THEN
+            Variables.AddItemToList Item: CurrentURL List: WorkingURL
+        ELSE
+            Variables.AddItemToList Item: CurrentURL List: FailedURL
+        END
+    END
+    LOOP FOREACH CurrentActiveURL IN WorkingURL
+        IF CurrentActiveURL = $'''https://factory-3.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''CIPL''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://factory-1.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''GTL''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://factory-4.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''PGCL''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://factory-2.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''EGMCL7''' List: ActiveFactorys
+        ELSE IF CurrentActiveURL = $'''https://factory-5.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''JDL''' List: ActiveFactorys
+        END
+    END
+    LOOP FOREACH CurrentInactiveURL IN FailedURL
+        IF CurrentInactiveURL = $'''https://factory-3.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''CIPL''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://factory-1.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''GTL''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://factory-4.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''PGCL''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://factory-2.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''EGMCL7''' List: InactiveFactorys
+        ELSE IF CurrentInactiveURL = $'''https://factory-5.example.invalid''' THEN
+            Variables.AddItemToList Item: $'''JDL''' List: InactiveFactorys
+        END
+    END
+    LOOP FOREACH CurrentFactory IN ActiveFactorys
+        IF CurrentFactory = $'''CIPL''' THEN
+            SET FactoryURL TO $'''https://factory-3.example.invalid'''
+            SET UserName TO $'''REPLACE_WITH_USERNAME'''
+            SET Password TO $'''REPLACE_WITH_PASSWORD'''
+            SET Data2001 TO $'''%FactoryURL%/qcm/Reports/GroupTopDefect'''
+            SET Data8006 TO $'''%FactoryURL%/qcm/Reports/WeeklyDHUByLine'''
+            SET Data8012 TO $'''%FactoryURL%/qcm/Reports/KillGarmentSummByColor'''
+            SET Data8015 TO $'''%FactoryURL%/qcm/Reports/CuttingQC'''
+            SET Data8016 TO $'''%FactoryURL%/qcm/Reports/KillGarmentDetails'''
+            SET Data30026 TO $'''%FactoryURL%/Reports/30026-DailyCuttingProduction'''
+            SET Data50000 TO $'''%FactoryURL%/Reports/50000-SkillHistoryByEmployee'''
+            SET Data70012 TO $'''%FactoryURL%/Reports/70012-EmployeeEfficiency'''
+            SET Data70077 TO $'''%FactoryURL%/Reports/70077-ProcessWiseProductionWIP'''
+            SET Data8018 TO $'''%FactoryURL%/qcm/Reports/DefectSummaryByOperator'''
+            SET Data10006 TO $'''%FactoryURL%/Reports/10006-DailyEmployeeClockInOut'''
+            SET Checkpoints_QCM_2001 TO $'''\"W/B QC\", \"CUT PANEL INSPECTION\", \"FIN INSIDE QC (BACK)\", \"FIN INSIDE QC (FRONT)\", \"Fin Measurement Defect\", \"FIN TOPSIDE QC (FRONT)\", \"SEWING END QC (INSIDE)\", \"SEWING END QC (TOPSIDE)\", \"SEWING ENDLINE QC\", \"FIN TOP SIDE QC\", \"FIN GET UP QC\", \"FIN TOPSIDE QC (BACK)\", '''
+            SET ProcessStage_SDT_70077 TO ['WASH', 'FIN', 'PACK', 'SEW']
+            SET Depertment_QCM_8018 TO ['[U1] Finishing', '[U2] Finishing', '[U3] Finishing', '[U1] Sewing', '[U2] Sewing', '[U3] Sewing']
+            SET Factory_Name TO $'''-'''
+        ELSE IF CurrentFactory = $'''GTL''' THEN
+            SET FactoryURL TO $'''https://factory-1.example.invalid'''
+            SET UserName TO $'''REPLACE_WITH_USERNAME'''
+            SET Password TO $'''REPLACE_WITH_PASSWORD'''
+            SET Data2001 TO $'''%FactoryURL%/qcm/Reports/GroupTopDefect'''
+            SET Data8006 TO $'''%FactoryURL%/qcm/Reports/WeeklyDHUByLine'''
+            SET Data8012 TO $'''%FactoryURL%/qcm/Reports/KillGarmentSummByColor'''
+            SET Data8015 TO $'''%FactoryURL%/qcm/Reports/CuttingQC'''
+            SET Data8016 TO $'''%FactoryURL%/qcm/Reports/KillGarmentDetails'''
+            SET Data30026 TO $'''%FactoryURL%/Reports/30026-DailyCuttingProduction'''
+            SET Data50000 TO $'''%FactoryURL%/Reports/50000-SkillHistoryByEmployee'''
+            SET Data70012 TO $'''%FactoryURL%/Reports/70012-EmployeeEfficiency'''
+            SET Data70077 TO $'''%FactoryURL%/Reports/70077-ProcessWiseProductionWIP'''
+            SET Data8018 TO $'''%FactoryURL%/qcm/Reports/DefectSummaryByOperator'''
+            SET Data10006 TO $'''%FactoryURL%/Reports/10006-DailyEmployeeClockInOut'''
+            SET Checkpoints_QCM_2001 TO $'''\"WASHING QC\", \"CUT PANEL INSPECTION\", \"FIN ENDLINE QC\", \"FIN GET UP QC\", \"FIN INSIDE QC\", \"FIN MEASUREMENT QC\", \"PRODUCT DIGNITY\", \"ROVING QC\", \"SEWING ENDLINE QC\", \"SEWING ENDLINE QC(INSIDE)\", \"SEWING IN LINE QC 1\", \"SEWING IN LINE QC 2\", \"SEWING IN LINE QC 3\", \"SEWING IN LINE QC 4\"'''
+            SET ProcessStage_SDT_70077 TO ['WASH', 'FIN', 'PACKING', 'SEW']
+            SET Depertment_QCM_8018 TO ['[U1] Finishing', '[U2] Finishing', '[U3] Finishing', '[U4] Finishing', '[U1] Sewing', '[U2] Sewing', '[U3] Sewing', '[U4] Sewing']
+            SET Factory_Name TO $'''-'''
+        ELSE IF CurrentFactory = $'''PGCL''' THEN
+            SET FactoryURL TO $'''https://factory-4.example.invalid'''
+            SET UserName TO $'''REPLACE_WITH_USERNAME'''
+            SET Password TO $'''REPLACE_WITH_PASSWORD'''
+            SET Data2001 TO $'''%FactoryURL%/qcm/Reports/GroupTopDefect'''
+            SET Data8006 TO $'''%FactoryURL%/qcm/Reports/WeeklyDHUByLine'''
+            SET Data8012 TO $'''%FactoryURL%/qcm/Reports/KillGarmentSummByColor'''
+            SET Data8015 TO $'''%FactoryURL%/qcm/Reports/CuttingQC'''
+            SET Data8016 TO $'''%FactoryURL%/qcm/Reports/KillGarmentDetails'''
+            SET Data30026 TO $'''%FactoryURL%/Reports/30026-DailyCuttingProduction'''
+            SET Data50000 TO $'''%FactoryURL%/Reports/50000-SkillHistoryByEmployee'''
+            SET Data70012 TO $'''%FactoryURL%/Reports/70012-EmployeeEfficiency'''
+            SET Data70077 TO $'''%FactoryURL%/Reports/70077-ProcessWiseProductionWIP'''
+            SET Data8018 TO $'''%FactoryURL%/qcm/Reports/DefectSummaryByOperator'''
+            SET Data10006 TO $'''%FactoryURL%/Reports/10006-DailyEmployeeClockInOut'''
+            SET Checkpoints_QCM_2001 TO $'''\"BACK IN LINE QC\", \"FINISHING GET UP QC\", \"FINISHING IN\", \"Finishing Inside QC\", \"FRONT QC\", \"MID LINE QC\", \"SEWING ENDLINE QC\"'''
+            SET ProcessStage_SDT_70077 TO ['WASH', 'FIN', 'PACK', 'SEW']
+            SET Depertment_QCM_8018 TO ['Finishing', 'Sewing']
+            SET Factory_Name TO $'''-'''
+        ELSE IF CurrentFactory = $'''EGMCL7''' THEN
+            SET FactoryURL TO $'''https://factory-2.example.invalid'''
+            SET UserName TO $'''REPLACE_WITH_USERNAME'''
+            SET Password TO $'''REPLACE_WITH_PASSWORD'''
+            SET Data2001 TO $'''%FactoryURL%/qcm/Reports/GroupTopDefect'''
+            SET Data8006 TO $'''%FactoryURL%/qcm/Reports/WeeklyDHUByLine'''
+            SET Data8012 TO $'''%FactoryURL%/qcm/Reports/KillGarmentSummByColor'''
+            SET Data8015 TO $'''%FactoryURL%/qcm/Reports/CuttingQC'''
+            SET Data8016 TO $'''%FactoryURL%/qcm/Reports/KillGarmentDetails'''
+            SET Data30026 TO $'''%FactoryURL%/Reports/30026-DailyCuttingProduction'''
+            SET Data50000 TO $'''%FactoryURL%/Reports/50000-SkillHistoryByEmployee'''
+            SET Data70012 TO $'''%FactoryURL%/Reports/70012-EmployeeEfficiency'''
+            SET Data70077 TO $'''%FactoryURL%/Reports/70077-ProcessWiseProductionWIP'''
+            SET Data8018 TO $'''%FactoryURL%/qcm/Reports/DefectSummaryByOperator'''
+            SET Data10006 TO $'''%FactoryURL%/Reports/10006-DailyEmployeeClockInOut'''
+            SET Checkpoints_QCM_2001 TO $'''\"END LINE QI\", \"BACK QI\", \"DIGNITY AUDIT - FIN\", \"FIN INSIDE QC\", \"FIN MEASUREMENT QC\", \"FIN TOP SIDE QC\", \"FRONT QI\", \"INSIDE QI - SEW\", \"SEWING ENDLINE QC\", \"MID LINE QI\", \"WB TOP STC QI\", '''
+            SET ProcessStage_SDT_70077 TO ['WASH', 'FIN', 'PACK', 'SEW', 'SEW-RIB']
+            SET Depertment_QCM_8018 TO ['Finishing', 'Sewing']
+            SET Factory_Name TO $'''FTYU7_EGMCL'''
+        ELSE IF CurrentFactory = $'''JDL''' THEN
+            SET FactoryURL TO $'''https://factory-5.example.invalid'''
+            SET UserName TO $'''REPLACE_WITH_USERNAME'''
+            SET Password TO $'''REPLACE_WITH_PASSWORD'''
+            SET Data2001 TO $'''%FactoryURL%/qcm/Reports/GroupTopDefect'''
+            SET Data8006 TO $'''%FactoryURL%/qcm/Reports/WeeklyDHUByLine'''
+            SET Data8012 TO $'''%FactoryURL%/qcm/Reports/KillGarmentSummByColor'''
+            SET Data8015 TO $'''%FactoryURL%/qcm/Reports/CuttingQC'''
+            SET Data8016 TO $'''%FactoryURL%/qcm/Reports/KillGarmentDetails'''
+            SET Data30026 TO $'''%FactoryURL%/Reports/30026-DailyCuttingProduction'''
+            SET Data50000 TO $'''%FactoryURL%/Reports/50000-SkillHistoryByEmployee'''
+            SET Data70012 TO $'''%FactoryURL%/Reports/70012-EmployeeEfficiency'''
+            SET Data70077 TO $'''%FactoryURL%/Reports/70077-ProcessWiseProductionWIP'''
+            SET Data8018 TO $'''%FactoryURL%/qcm/Reports/DefectSummaryByOperator'''
+            SET Data10006 TO $'''%FactoryURL%/Reports/10006-DailyEmployeeClockInOut'''
+            SET Checkpoints_QCM_2001 TO $'''\"APPERANCE QC\", \"CPU QC\", \"INLINE QC\", \"MEASUREMENT QC\", \"PREP OUTPUT QC\", \"SEWING QC\", \"SEWING ENDLINE QC\", \"SEWING ROVING QC\" '''
+            SET ProcessStage_SDT_70077 TO ['WASH', 'FIN', 'PACK', 'SEW', 'CUT']
+            SET Depertment_QCM_8018 TO ['[U1] Finishing', '[U1] Sewing']
+            SET Factory_Name TO $'''FTYU1_EDLJD'''
+        END
+        SET FactoryRetryCount TO 0
+        SET MaxFactoryRetries TO 2
+        SET FactorySuccess TO $'''False'''
+        LOOP WHILE FactoryRetryCount < MaxFactoryRetries AND FactorySuccess = $'''False'''
+            WebAutomation.LaunchChrome.LaunchChromePressDialogButton Url: FactoryURL WindowState: WebAutomation.BrowserWindowState.Maximized ClearCache: False ClearCookies: False WaitForPageToLoadTimeout: 60 DialogButton: $'''OK''' Timeout: 60 PiPUserDataFolderMode: WebAutomation.PiPUserDataFolderModeEnum.AutomaticProfile TargetDesktop: $'''{\"DisplayName\":\"Local computer\",\"Route\":{\"ServerType\":\"Local\",\"ServerAddress\":\"\"},\"DesktopType\":\"local\"}''' BrowserInstance=> Browser
+            ON ERROR
+                SET FactoryRetryCount TO FactoryRetryCount + 1
+                Scripting.RunPowershellScript.RunScriptAndFailOnTimeout Script: $'''Get-Process chrome,msedge -ErrorAction SilentlyContinue | Stop-Process -Force''' Timeout: 30
+                ON ERROR
+                END
+                WAIT 5
+                GOTO 'Retry Factory Block'
+            END
+            CALL 'Welcome Flow'
+            WAIT (WebAutomation.WaitForWebPageContent.WebPageToContainElement BrowserInstance: Browser Control: appmask['Web Page \'https://factory-2.example.invalid\'']['Image \'logo\'']) FOR 60
+            ON ERROR WaitForWebPageContentError
+                SET FactoryRetryCount TO FactoryRetryCount + 1
+                WebAutomation.CloseWebBrowser BrowserInstance: Browser
+                ON ERROR
+                END
+                GOTO 'Retry Factory Block'
+            ON ERROR TimeoutError
+                SET FactoryRetryCount TO FactoryRetryCount + 1
+                WebAutomation.CloseWebBrowser BrowserInstance: Browser
+                ON ERROR
+                END
+                GOTO 'Retry Factory Block'
+            END
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data2001 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'QCM 2001 - Top Defects'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data8012 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'QCM 8012 - Kill Garment Summary'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data8015 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'QCM 8015 - Cutting QC'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data8016 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'QCM 8016 - Kill Garment Details'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data30026 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'SDT 30026 - Daily Cutting Production'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data50000 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'SDT 50000 - Skill History By Emp'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data70012 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'SDT 70012 - Employee Efficiency'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data70077 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'SDT 70077 - Process Wise Production WIP '
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data8018 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'QCM 8018 - Defect Summary By Operator'
+            WebAutomation.GoToWebPage.GoToWebPagePressDialogButton BrowserInstance: Browser Url: Data10006 WaitForPageToLoadTimeout: 60 DialogButton: $'''OK'''
+            CALL 'SDT 10006 - Daily Employee Clock In Out'
+            WAIT 10
+            WebAutomation.CloseWebBrowser BrowserInstance: Browser
+            ON ERROR
+            END
+            SET FactorySuccess TO $'''True'''
+            LABEL 'Retry Factory Block'
+            IF FactorySuccess = $'''False''' THEN
+                WAIT 5
+            END
+        END
+        IF FactorySuccess = $'''False''' THEN
+            Variables.AddItemToList Item: $'''❌ Factory %CurrentFactory% completely failed after %MaxFactoryRetries% attempts''' List: Missing_Files
+        END
+    END
+    IF IsNotEmpty(Missing_Files) THEN
+        SET FlowStatus TO $'''⚠️ Completed with Exceptions (%Missing_Files.Count% file(s) missed)'''
+        SET MissingFilesReport TO $'''<b>Missing Files / Exceptions:</b><br>%Missing_Files%<br><br>'''
+    ELSE
+        SET FlowStatus TO $'''✅ Completed Successfully (All files downloaded)'''
+        SET MissingFilesReport TO $'''<b>Missing Files:</b><br>None - All files downloaded successfully.<br><br>'''
+    END
+    @@location: 'Chat with Flow bot'
+@@'InputSchema:body': '2120188165'
+@@connectionDisplayName: 'RECONFIGURE_TEAMS_CONNECTION'
+    External.InvokeCloudConnector Connection: '00000000-0000-0000-0000-000000000000' ConnectorId: '/providers/Microsoft.PowerApps/apis/shared_teams' OperationId: 'PostMessageToConversation' timeout: 60 @poster: $'''Flow bot''' @location: $'''Chat with Flow bot''' @'body/recipient': $'''operator@example.invalid''' @'body/messageBody': $'''<b>📊 Quality Daily Data for All Factory flow</b><br><br>
+
+Dear Hasan,<br><br>
+
+Status: %FlowStatus%<br><br>
+
+<b>Active Factories:</b><br>
+%ActiveFactorys%<br><br>
+
+<b>Completed On:</b><br>
+%CurrentDateTime%<br><br>
+
+<b>Closed Factory URLs:</b><br>
+%InactiveFactorys%<br><br>
+
+%MissingFilesReport%
+
+https://factory-6.example.invalid<br><br>
+
+<b>Best Regards,</b><br>
+RPA Bot'''
+    ON ERROR REPEAT 5 TIMES WAIT 3
+    END
+END FUNCTION
